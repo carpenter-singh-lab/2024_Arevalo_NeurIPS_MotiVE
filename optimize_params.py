@@ -16,9 +16,9 @@ def generate_parameters(num_opts: int):
     config_search = []
     rng = np.random.default_rng(SEED)
     for i in range(num_opts):
-        hidden_channels = rng.choice([64, 128, 256])
-        learning_rate = 10.0 ** rng.uniform(-6, -2)
-        weight_decay = 10.0 ** rng.uniform(-5, 1)
+        hidden_channels = rng.choice([128, 256, 512, 1024])
+        learning_rate = 10.0 ** rng.uniform(-6, -1)
+        weight_decay = 10.0 ** rng.uniform(-5, 0)
 
         config_search.append((hidden_channels, learning_rate, weight_decay))
 
