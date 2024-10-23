@@ -16,22 +16,31 @@ def run_update(model, optimizer, data):
     data.to(DEVICE)
     logits = model(data)
     y_true = data["binds"].edge_label
-    loss = F.binary_cross_entropy_with_logits(logits, y_true)
+    paired = data.bpr_indices
+    positives, negatives = logits[paired].T
+    num_nodes = data.bpr_weights.sum()
+    errors = -F.logsigmoid(positives - negatives) * data.bpr_weights
+    loss = errors.sum() / num_nodes
     if optimizer:  # with Cosine model, optimizer is None
         loss.backward()
         optimizer.step()
-    return logits, y_true
+    return logits, y_true, loss
 
 
 def run_train_epoch(model, loader, optimizer):
     model.train()
-    edges, outs = [], []
+    edges, logits, y_true = [], [], []
+    loss = 0
     for batch in loader:
-        outs.append(run_update(model, optimizer, batch))
         edges.append(batch["binds"].edge_label_index)
-    logits, y_true = map(torch.cat, zip(*outs))
+        outs = run_update(model, optimizer, batch)
+        logits.append(outs[0])
+        y_true.append(outs[1])
+        loss += float(outs[2].detach().cpu())
+    logits = torch.cat(logits)
+    y_true = torch.cat(y_true)
     edges = torch.cat(edges, dim=1)
-    return logits, y_true, edges
+    return logits, y_true, edges, loss
 
 
 @torch.inference_mode
@@ -126,9 +135,12 @@ def train_loop(
     )
     ev = Evaluator("configs/eval/test_evaluation_params.json")
     best_metric = float("-inf")
-    criteria = "Hits@500"
+    criteria = locator.config["data_split"] + "_mAP"
     for epoch in tqdm(range(1, num_epochs + 1)):
-        logits, y_true, edges = run_train_epoch(model, train_loader, optimizer)
+        logits, y_true, edges, loss = run_train_epoch(model, train_loader, optimizer)
+        writer.add_scalar("train/loss", loss, epoch)
+        if epoch % 20 > 0:
+            continue
         with torch.inference_mode():
             best_th = get_best_th(logits, y_true)
             metrics = ev.evaluate(logits, y_true, best_th, edges)

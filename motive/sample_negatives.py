@@ -2,6 +2,8 @@ import torch
 from torch_geometric.data import HeteroData
 from torch_geometric.transforms import BaseTransform
 
+from motive.bpr import create_positive_negative_pairs
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -82,4 +84,10 @@ class SampleNegatives(BaseTransform):
         data["binds"].edge_label = new_label
         data["binds"].edge_label_index = new_edges.contiguous()
 
+        # Add paired indices for bpr
+        split_index = {"source": 0, "target": 1}[self.split]
+        indices = data["binds"].edge_label_index[split_index]
+        bpr_indices, bpr_weights = create_positive_negative_pairs(indices, new_label)
+        data.bpr_indices = bpr_indices
+        data.bpr_weights = bpr_weights
         return data
