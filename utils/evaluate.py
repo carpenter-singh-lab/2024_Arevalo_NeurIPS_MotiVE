@@ -33,7 +33,7 @@ def compute_map(df):
         pos_pairs, neg_pairs, pos_sims, neg_sims
     )
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', r'invalid value encountered in divide')
+        warnings.filterwarnings("ignore", r"invalid value encountered in divide")
         ap_scores, null_confs = compute.ap_contiguous(rel_k_list, counts)
     ap_scores = pd.DataFrame(
         {
@@ -44,8 +44,6 @@ def compute_map(df):
             "n_total_pairs": null_confs[:, 1],
         }
     )
-    ap_scores["p_value"] = p_values(ap_scores, 10000, 0)
-    ap_scores["below_p_value"] = ap_scores["p_value"] < 0.05
     return ap_scores
 
 
@@ -67,6 +65,7 @@ class Evaluator:
         self.scores = {}
 
     def evaluate(self, logits, y_true, th, edges):
+        self.scores = {}
         for metric in self.config["metrics"]:
             if metric == "ACC":
                 score = self._eval_ACC(logits, y_true, th)
@@ -92,6 +91,8 @@ class Evaluator:
                 score = self._eval_loss(logits, y_true)
             elif metric == "mAP":
                 score = self._eval_mAP(logits, y_true, edges)
+            elif metric == "Robhan":
+                score = self._robhan(logits, y_true, edges)
             if type(score) is dict:
                 self.scores.update(score)
             else:
@@ -194,18 +195,50 @@ class Evaluator:
                 "score": logits.cpu().numpy(),
             }
         )
-        split = "source"
-        ap_scores = compute_map(dframe).query(f"node_type=='{split}'")
-        lt_p = ap_scores.below_p_value.sum()
-        lt_p_ratio = lt_p / len(ap_scores)
-        mean_average_precision = ap_scores["average_precision"].mean()
-        scores = {
-            f"{split}_lt_p": lt_p,
-            f"{split}_lt_p_ratio": lt_p_ratio,
-            f"{split}_mAP": mean_average_precision,
-        }
+        scores = {}
+        for split in "source", "target":
+            ap_scores = compute_map(dframe).query(f"node_type=='{split}'")
+            mean_average_precision = ap_scores["average_precision"].mean()
+            # Enable to compute p-values
+            # ap_scores["p_value"] = p_values(ap_scores, 10000, 0)
+            # ap_scores["below_p_value"] = ap_scores["p_value"] < 0.05
+            # lt_p = ap_scores.below_p_value.sum()
+            # lt_p_ratio = lt_p / len(ap_scores)
+            scores.update(
+                {
+                    # f"{split}_lt_p": lt_p,
+                    # f"{split}_lt_p_ratio": lt_p_ratio,
+                    f"{split}_mAP": mean_average_precision,
+                }
+            )
         return scores
 
+    def _robhan(self, logits, y_true, edges):
+        source, target = edges.cpu().numpy()
+        dframe = pd.DataFrame(
+            {
+                "source": source,
+                "target": target,
+                "y_true": y_true.cpu().numpy(),
+                "score": logits.cpu().numpy(),
+            }
+        )
+        dframe["src_count"] = dframe["source"].map(dframe["source"].value_counts())
+        dframe["tgt_count"] = dframe["target"].map(dframe["target"].value_counts())
+        scores = {}
+        th = self.config["Robhan_th"]
+        for split in "source", "target":
+            dframe["rank"] = dframe.groupby(split)["score"].rank(
+                method="min", ascending=False, pct=False
+            )
+            dframe["rank_pct"] = dframe.groupby(split)["score"].rank(
+                method="min", ascending=False, pct=True
+            )
+            num = dframe.query(f"rank_pct <= {th} and y_true==1")[split].nunique()
+            pct = num / dframe[split].nunique()
+            scores[f"{split}_robhan_num"] = num
+            scores[f"{split}_robhan_pct"] = pct
+        return scores
 
 def save_metrics(scores: dict, output_path: str):
     pd.DataFrame.from_dict(scores, "index", dtype=np.float32).to_csv(

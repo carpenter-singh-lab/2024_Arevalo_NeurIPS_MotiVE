@@ -1,12 +1,7 @@
 {
     "metrics": [
-        "AUC",
-        "Hits@K",
-        "Precision@K",
-        "F1",
-        "BCELoss",
-        "mAP"
+        "mAP",
+        "Robhan"
     ],
-    "Hits_K": 500,
-    "Precision_K": 500
+    "Robhan_th": 0.05
 }
