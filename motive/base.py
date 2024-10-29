@@ -7,8 +7,6 @@ from torch_geometric.loader import LinkNeighborLoader, PrefetchLoader
 
 from .sample_negatives import SampleNegatives
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def get_counts(data: HeteroData) -> tuple[int, int, dict]:
     num_sources = len(data["source"].node_id)
@@ -157,7 +155,7 @@ def load_bipartite_graph(
     data["source", "binds", "target"].edge_index = msgs
     data["source", "binds", "target"].edge_label_index = sups
     data["source", "binds", "target"].edge_label = edge_label
-    data = T.ToUndirected()(data).to(DEVICE, non_blocking=True)
+    data = T.ToUndirected()(data)
 
     return data
 
@@ -202,7 +200,7 @@ def load_graph(
     data["source", "binds", "target"].edge_label_index = sups
     data["source", "binds", "target"].edge_label = edge_label
 
-    data = T.ToUndirected()(data).to(DEVICE, non_blocking=True)
+    data = T.ToUndirected()(data)
 
     return data
 
@@ -267,7 +265,7 @@ def get_loader(data: HeteroData, edges, leave_out, type: str) -> LinkNeighborLoa
         shuffle=shuffle,
         filter_per_worker=True,
     )
-    return PrefetchLoader(loader=data_loader, device=DEVICE)
+    return PrefetchLoader(loader=data_loader)
 
 
 def get_loaders(

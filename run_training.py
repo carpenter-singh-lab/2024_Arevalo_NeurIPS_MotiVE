@@ -1,11 +1,15 @@
 import argparse
 import os.path
 
+import torch
+
 from model import create_model
 from motive import get_loaders
-from train import DEVICE, run_test, train_loop
+from train import run_test, train_loop
 from utils.evaluate import save_metrics
 from utils.utils import PathLocator
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def workflow(locator, num_epochs, tgt_type, graph_type, eval_test=False):

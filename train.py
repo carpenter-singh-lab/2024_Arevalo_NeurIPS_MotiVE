@@ -6,14 +6,12 @@ from tqdm.autonotebook import tqdm
 
 from utils.evaluate import Evaluator, get_best_th, save_metrics
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = 2024313
 
 
 def run_update(model, optimizer, data):
     if optimizer:  # with Cosine model, optimizer is None
         optimizer.zero_grad()
-    data.to(DEVICE)
     logits = model(data)
     y_true = data["binds"].edge_label
     paired = data.bpr_indices
@@ -50,7 +48,6 @@ def run_inference_epoch(model, loader):
     edges = []
     model.eval()
     for batch in loader:
-        batch.to(DEVICE)
         logits.append(model(batch))
         y_true.append(batch["binds"].edge_label)
         edges.append(batch["binds"].edge_label_index)
@@ -68,7 +65,6 @@ def run_test(model, test_loader, th):
     tgt_ids = []
     model.eval()
     for batch in test_loader:
-        batch.to(DEVICE)
         logits.append(model(batch))
         y_true.append(batch["binds"].edge_label)
 

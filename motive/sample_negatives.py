@@ -4,7 +4,6 @@ from torch_geometric.transforms import BaseTransform
 
 from motive.bpr import create_positive_negative_pairs
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def find_indices(reference, query):
@@ -51,13 +50,11 @@ def select_nodes_to_sample(data, split):
 
 class SampleNegatives(BaseTransform):
     def __init__(self, edges, split, ratio):
-        self.edges = torch.tensor(edges, device=DEVICE)
+        self.edges = torch.tensor(edges)
         self.split = split
         self.ratio = ratio
 
     def forward(self, data: HeteroData):
-        data = data.to(DEVICE, non_blocking=True)
-
         num_pos = len(data["binds"].edge_label)
         # Select nodes
         subgraph_src, subgraph_tgt = select_nodes_to_sample(data, self.split)
@@ -77,7 +74,7 @@ class SampleNegatives(BaseTransform):
         neg_edges = torch.stack([neg_src, neg_tgt])
         new_edges = torch.cat((data["binds"].edge_label_index, neg_edges), axis=1)
 
-        neg_label = torch.zeros(len(neg_src), device=DEVICE)
+        neg_label = torch.zeros(len(neg_src))
         new_label = torch.cat((data["binds"].edge_label, neg_label))
 
         # update data object
