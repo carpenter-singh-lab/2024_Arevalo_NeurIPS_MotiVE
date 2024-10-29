@@ -248,7 +248,7 @@ def get_loader(data: HeteroData, edges, leave_out, type: str) -> LinkNeighborLoa
     if type == "train":
         bsz = 512
         shuffle = True
-        ratio = 1
+        ratio = 10
     else:
         bsz = 8192
         shuffle = False

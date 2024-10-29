@@ -1,7 +1,7 @@
 [project]
-name = "example"
-version = "0.1.0"
-description = "Add your description here"
+name = "motive"
+version = "0.2.0"
+description = "A Drug-Target Interaction Graph For Inductive Link Prediction"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -28,4 +28,9 @@ dev = [
     "python-lsp-server>=1.12.0",
     "rope>=1.13.0",
     "yapf>=0.40.2",
+]
+
+[tool.uv]
+find-links = [
+    "https://data.pyg.org/whl/torch-2.4.0+cu124.html",
 ]

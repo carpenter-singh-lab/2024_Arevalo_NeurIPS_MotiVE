@@ -208,7 +208,7 @@ class Evaluator:
                 {
                     # f"{split}_lt_p": lt_p,
                     # f"{split}_lt_p_ratio": lt_p_ratio,
-                    f"{split}_mAP": mean_average_precision,
+                    f"{split}_mAP": float(mean_average_precision),
                 }
             )
         return scores

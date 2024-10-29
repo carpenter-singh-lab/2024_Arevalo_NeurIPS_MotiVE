@@ -320,63 +320,6 @@ wheels = [
 ]
 
 [[package]]
-name = "example"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "copairs" },
-    { name = "pyarrow" },
-    { name = "pyg-lib" },
-    { name = "scikit-learn" },
-    { name = "seaborn" },
-    { name = "snakemake" },
-    { name = "tensorboard" },
-    { name = "torch" },
-    { name = "torch-cluster" },
-    { name = "torch-geometric" },
-    { name = "torch-scatter" },
-    { name = "torch-sparse" },
-    { name = "torch-spline-conv" },
-    { name = "torcheval" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ipdb" },
-    { name = "python-lsp-ruff" },
-    { name = "python-lsp-server" },
-    { name = "rope" },
-    { name = "yapf" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "copairs", specifier = ">=0.4.2" },
-    { name = "pyarrow", specifier = ">=18.0.0" },
-    { name = "pyg-lib", specifier = ">=0.4.0" },
-    { name = "scikit-learn", specifier = ">=1.5.2" },
-    { name = "seaborn", specifier = ">=0.13.2" },
-    { name = "snakemake", specifier = ">=8.25.0" },
-    { name = "tensorboard", specifier = ">=2.18.0" },
-    { name = "torch", specifier = "==2.4.*" },
-    { name = "torch-cluster", specifier = ">=1.6.3" },
-    { name = "torch-geometric", specifier = ">=2.6.1" },
-    { name = "torch-scatter", specifier = ">=2.1.2" },
-    { name = "torch-sparse", specifier = ">=0.6.18" },
-    { name = "torch-spline-conv", specifier = ">=1.2.2" },
-    { name = "torcheval", specifier = ">=0.0.7" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipdb", specifier = ">=0.13.13" },
-    { name = "python-lsp-ruff", specifier = ">=2.2.2" },
-    { name = "python-lsp-server", specifier = ">=1.12.0" },
-    { name = "rope", specifier = ">=1.13.0" },
-    { name = "yapf", specifier = ">=0.40.2" },
-]
-
-[[package]]
 name = "executing"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -834,6 +777,63 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/99/5b/a36a337438a14116b16480db471ad061c36c3694df7c2084a0da7ba538b7/matplotlib_inline-0.1.7.tar.gz", hash = "sha256:8423b23ec666be3d16e16b60bdd8ac4e86e840ebd1dd11a30b9f117f2fa0ab90", size = 8159 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8f/8e/9ad090d3553c280a8060fbf6e24dc1c0c29704ee7d1c372f0c174aa59285/matplotlib_inline-0.1.7-py3-none-any.whl", hash = "sha256:df192d39a4ff8f21b1895d72e6a13f5fcc5099f00fa84384e0ea28c2cc0653ca", size = 9899 },
+]
+
+[[package]]
+name = "motive"
+version = "0.2.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "copairs" },
+    { name = "pyarrow" },
+    { name = "pyg-lib" },
+    { name = "scikit-learn" },
+    { name = "seaborn" },
+    { name = "snakemake" },
+    { name = "tensorboard" },
+    { name = "torch" },
+    { name = "torch-cluster" },
+    { name = "torch-geometric" },
+    { name = "torch-scatter" },
+    { name = "torch-sparse" },
+    { name = "torch-spline-conv" },
+    { name = "torcheval" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ipdb" },
+    { name = "python-lsp-ruff" },
+    { name = "python-lsp-server" },
+    { name = "rope" },
+    { name = "yapf" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "copairs", specifier = ">=0.4.2" },
+    { name = "pyarrow", specifier = ">=18.0.0" },
+    { name = "pyg-lib", specifier = ">=0.4.0" },
+    { name = "scikit-learn", specifier = ">=1.5.2" },
+    { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "snakemake", specifier = ">=8.25.0" },
+    { name = "tensorboard", specifier = ">=2.18.0" },
+    { name = "torch", specifier = "==2.4.*" },
+    { name = "torch-cluster", specifier = ">=1.6.3" },
+    { name = "torch-geometric", specifier = ">=2.6.1" },
+    { name = "torch-scatter", specifier = ">=2.1.2" },
+    { name = "torch-sparse", specifier = ">=0.6.18" },
+    { name = "torch-spline-conv", specifier = ">=1.2.2" },
+    { name = "torcheval", specifier = ">=0.0.7" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipdb", specifier = ">=0.13.13" },
+    { name = "python-lsp-ruff", specifier = ">=2.2.2" },
+    { name = "python-lsp-server", specifier = ">=1.12.0" },
+    { name = "rope", specifier = ">=1.13.0" },
+    { name = "yapf", specifier = ">=0.40.2" },
 ]
 
 [[package]]
