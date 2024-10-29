@@ -162,7 +162,7 @@ def train_loop(
         if log_gradients:
             log_gradients_in_model(model, writer, epoch)
 
-    best_params = torch.load(locator.model_path)
+    best_params = torch.load(locator.model_path, weights_only=True)
     best_th = best_params["best_th"]
     model.load_state_dict(best_params["model_state_dict"])
     print(f"Best {criteria}: " + str(best_metric))
