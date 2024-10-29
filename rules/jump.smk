@@ -6,15 +6,14 @@ wildcard_constraints:
 from motive import jump
 from motive import store_splits
 
-S3_ROOT = "s3://staging-cellpainting-gallery/cpg0034-arevalo-su-motive/broad/workspace/publication_data/2024_MOTIVE"
+S3_ROOT = "https://cellpainting-gallery.s3.amazonaws.com/cpg0034-arevalo-su-motive/broad/workspace/publication_data/2024_MOTIVE"
 
 
 rule download_from_s3:
     output:
         "{resource}",
     shell:
-        #f"aws s3 cp --no-sign-request {S3_ROOT}/{{wildcards.resource}} {{wildcards.resource}}"
-        f"aws s3 cp {S3_ROOT}/{{wildcards.resource}} {{wildcards.resource}}"
+        f"wget {S3_ROOT}/{{wildcards.resource}} -O {{wildcards.resource}}"
 
 
 rule prepare_jump_sources:
