@@ -29,15 +29,16 @@ def run_train_epoch(model, loader, optimizer):
     model.train()
     edges, logits, y_true = [], [], []
     loss = 0
-    for batch in loader:
+    for num_batches, batch in enumerate(loader):
         edges.append(batch["binds"].edge_label_index)
         outs = run_update(model, optimizer, batch)
-        logits.append(outs[0])
-        y_true.append(outs[1])
+        logits.append(outs[0].detach())
+        y_true.append(outs[1].detach())
         loss += float(outs[2].detach().cpu())
     logits = torch.cat(logits)
     y_true = torch.cat(y_true)
     edges = torch.cat(edges, dim=1)
+    loss /= (num_batches + 1)
     return logits, y_true, edges, loss
 
 
