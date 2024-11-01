@@ -137,27 +137,26 @@ def train_loop(
         writer.add_scalar("train/loss", loss, epoch)
         if epoch % 20 > 0:
             continue
-        with torch.inference_mode():
-            best_th = get_best_th(logits, y_true)
-            metrics = ev.evaluate(logits, y_true, best_th, edges)
-            for metric, score in metrics.items():
-                writer.add_scalar("train/" + metric, score, epoch)
-            writer.flush()
+        best_th = get_best_th(logits, y_true)
+        metrics = ev.evaluate(logits, y_true, best_th, edges)
+        for metric, score in metrics.items():
+            writer.add_scalar("train/" + metric, score, epoch)
+        writer.flush()
 
-            logits, y_true, edges = run_inference_epoch(model, val_loader)
-            metrics = ev.evaluate(logits, y_true, best_th, edges)
-            for metric, score in metrics.items():
-                writer.add_scalar("valid/" + metric, score, epoch)
-            writer.flush()
+        logits, y_true, edges = run_inference_epoch(model, val_loader)
+        metrics = ev.evaluate(logits, y_true, best_th, edges)
+        for metric, score in metrics.items():
+            writer.add_scalar("valid/" + metric, score, epoch)
+        writer.flush()
 
-            if metrics[criteria] > best_metric:
-                best_metric = metrics[criteria]
-                state = dict(
-                    model_state_dict=model.state_dict(),
-                    best_th=best_th,
-                )
-                torch.save(state, locator.model_path)
-                save_metrics(metrics, locator.valid_metrics_path)
+        if metrics[criteria] > best_metric:
+            best_metric = metrics[criteria]
+            state = dict(
+                model_state_dict=model.state_dict(),
+                best_th=best_th,
+            )
+            torch.save(state, locator.model_path)
+            save_metrics(metrics, locator.valid_metrics_path)
 
         if log_gradients:
             log_gradients_in_model(model, writer, epoch)

@@ -47,6 +47,7 @@ def compute_map(df):
     return ap_scores
 
 
+@torch.inference_mode
 def get_best_th(logits, y_true):
     return 0
     # TODO: Check binary f1 is unimodal so that binary search fits
@@ -64,6 +65,7 @@ class Evaluator:
             self.config = json.load(freader)
         self.scores = {}
 
+    @torch.inference_mode
     def evaluate(self, logits, y_true, th, edges):
         self.scores = {}
         for metric in self.config["metrics"]:
@@ -181,7 +183,6 @@ class Evaluator:
 
         return mrr
 
-    @torch.inference_mode
     def _eval_loss(self, logits, y_true):
         return F.binary_cross_entropy_with_logits(logits, y_true.to(torch.float32))
 

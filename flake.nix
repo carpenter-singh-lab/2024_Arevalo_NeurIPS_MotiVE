@@ -73,6 +73,7 @@
                         export LD_LIBRARY_PATH=$NIX_LD_LIBRARY_PATH:$LD_LIBRARY_PATH
                         export PYTHON_KEYRING_BACKEND=keyring.backends.fail.Keyring
                         export CUDA_HOME=${apkgs.cudaPackages_12_4.cudatoolkit}
+                        source .venv/bin/activate
                     '';
                   };
               };

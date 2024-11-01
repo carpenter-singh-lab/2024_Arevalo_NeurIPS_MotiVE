@@ -90,7 +90,7 @@ def main():
         curr_config.update(metrics.set_index(0)[1])
         results.append(curr_config)
 
-    criteria = "Hits@500"
+    criteria = f"{args.data_split}_mAP"
     results = pd.json_normalize(results).sort_values(by=criteria, ascending=False)
     results.to_csv(f"{args.output_path}/param_search.csv", index=False)
     writer = SummaryWriter(log_dir=args.output_path)
