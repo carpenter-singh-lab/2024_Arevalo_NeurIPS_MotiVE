@@ -7,7 +7,7 @@ import pandas as pd
 import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
-from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter
+from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter, anno_simple, anno_label
 
 from model import create_model
 from motive import get_all_st_edges, get_loaders, load_graph_helper
@@ -129,8 +129,8 @@ def run_test_mini(model, test_loader, th):
 
 tgt_type = "orf"
 graph_type = "st_expanded"
-config_path = "outtest/skip/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
-# config_path = "outputs/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
+#config_path = "outtest/skip/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
+config_path = "outputs/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
 output_path = Path(config_path).parent.parent
 
 locator = PathLocator(config_path, output_path)
@@ -151,6 +151,7 @@ assert (joined.y_true_full == joined.y_true_mini).all()
 pprint((joined.score_full - joined.score_mini).abs().describe())
 pprint({"results_mini": test_metrics_mini, "results_full": test_metrics_full})
 
+# Full matrix prediction in test
 src = test_data["binds"].edge_label_index[0].unique()
 tgt = test_data["binds"].edge_label_index[1].unique()
 edges = torch.cartesian_prod(src, tgt).T.contiguous()
@@ -335,6 +336,8 @@ plt.close("all")
 plt.figure(figsize=(18, 14))
 gene_counts = wf.groupby("genes")[cols].sum()
 inchi_counts = wf.groupby("inchi")[cols].sum()
+inchi_counts_all = scores.query("rank<=15").inchi.value_counts()[inchi_counts.index] / scores["genes"].nunique()
+inchi_counts_all = inchi_counts_all.apply('{:,.2%}'.format)
 top_annotation = HeatmapAnnotation(
     axis=1, rel_type=anno_barplot(gene_counts, colors=colors), legend=False
 )
@@ -342,7 +345,7 @@ right_annotation = HeatmapAnnotation(
     axis=0,
     orientation="right",
     inchi=anno_barplot(inchi_counts, colors=colors, legend=False),
-    #label_side="top",
+    hits=anno_label(inchi_counts_all, colors="black"),
     label_kws={"visible": False},
 )
 op = oncoPrintPlotter(
