@@ -1,5 +1,4 @@
 import itertools
-from pathlib import Path
 from pprint import pprint
 
 import numpy as np
@@ -7,8 +6,8 @@ import pandas as pd
 import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
-from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter, anno_simple, anno_label
 
+from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter, anno_label
 from model import create_model
 from motive import get_all_st_edges, get_loaders, load_graph_helper
 from motive.sample_negatives import negative_sampling, select_nodes_to_sample
@@ -127,13 +126,14 @@ def run_test_mini(model, test_loader, th):
     return results, test_metrics
 
 
-tgt_type = "orf"
-graph_type = "st_expanded"
-#config_path = "outtest/skip/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
-config_path = "outputs/e535dfb1f63ebf9b35368bf2d4cd0dc3/config.json"
-output_path = Path(config_path).parent.parent
+config_path = "assembled/orf/target/st_expanded/cosine/7ba97e/config.json"
+output_path = "assembled"
 
 locator = PathLocator(config_path, output_path)
+analysis_path = locator.summary_path / "analysis"
+analysis_path.mkdir(exist_ok=True)
+tgt_type = locator.config["target_type"]
+graph_type = locator.config["graph_type"]
 leave_out = locator.config["data_split"]
 train_data, valid_data, test_data = load_graph_helper(leave_out, tgt_type, graph_type)
 train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
@@ -187,8 +187,8 @@ clustergrid = sns.clustermap(pivot, cmap="vlag")
 pivot = pivot.iloc[clustergrid.dendrogram_row.reordered_ind]
 columns_ord = pivot.columns[clustergrid.dendrogram_col.reordered_ind]
 pivot = pivot[columns_ord]
-pivot.to_csv("pivot.csv")
-plt.savefig("clustermap.png", bbox_inches="tight")
+pivot.to_csv(analysis_path / "pivot.csv")
+plt.savefig(analysis_path / "clustermap.png", bbox_inches="tight")
 
 ann = pd.read_parquet("./inputs/annotations/compound_gene.parquet")
 results_mini["compound"] = src_names[results_mini.index.get_level_values("source")]
@@ -240,7 +240,7 @@ for i, row in enumerate(stats.itertuples()):
     )
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
-plt.savefig("rel_rank.pdf", bbox_inches="tight")
+plt.savefig(analysis_path / "rel_rank.pdf", bbox_inches="tight")
 plt.close("all")
 
 
@@ -271,7 +271,7 @@ for i, row in enumerate(stats.itertuples()):
     )
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
-plt.savefig("db_rank.pdf", bbox_inches="tight")
+plt.savefig(analysis_path / "db_rank.pdf", bbox_inches="tight")
 plt.close("all")
 
 recall = (
@@ -282,7 +282,7 @@ recall = (
     .sort_index()
     .cumsum()
 )
-recall.to_csv("gnn.csv")
+recall.to_csv(analysis_path / "recall.csv")
 
 rnds = []
 counts = scores.groupby("genes")["y_true"].sum()
@@ -336,8 +336,11 @@ plt.close("all")
 plt.figure(figsize=(18, 14))
 gene_counts = wf.groupby("genes")[cols].sum()
 inchi_counts = wf.groupby("inchi")[cols].sum()
-inchi_counts_all = scores.query("rank<=15").inchi.value_counts()[inchi_counts.index] / scores["genes"].nunique()
-inchi_counts_all = inchi_counts_all.apply('{:,.2%}'.format)
+inchi_counts_all = (
+    scores.query("rank<=15").inchi.value_counts()[inchi_counts.index]
+    / scores["genes"].nunique()
+)
+inchi_counts_all = inchi_counts_all.apply("{:,.2%}".format)
 top_annotation = HeatmapAnnotation(
     axis=1, rel_type=anno_barplot(gene_counts, colors=colors), legend=False
 )
@@ -360,6 +363,6 @@ op = oncoPrintPlotter(
     row_names_side="left",
     top_annotation=top_annotation,
     right_annotation=right_annotation,
-    legend_width=100
+    legend_width=100,
 )
-plt.savefig("oncoPrint.pdf", bbox_inches="tight")
+plt.savefig(analysis_path / "oncoPrint.pdf", bbox_inches="tight")
