@@ -65,7 +65,9 @@ def main():
         del curr_config["Index"]
         curr_config["model_name"] = args.model
         curr_config["data_split"] = args.data_split
-
+        curr_config["target_type"] = args.target_type
+        curr_config["graph_type"] = args.graph_type
+        curr_config["num_epochs"] = args.num_epochs
         if args.model in ("gnn", "gat", "gin"):
             curr_config["initialization"] = args.initialization
 
@@ -77,15 +79,8 @@ def main():
             curr_config["config_id"] = locator.hashid
 
         if locator.model_path.is_file():
-            num_epochs = 0
-        else:
-            num_epochs = args.num_epochs
-        train_workflow(
-            locator,
-            num_epochs,
-            args.target_type,
-            args.graph_type,
-        )
+            curr_config["num_epochs"] = 0
+        train_workflow(locator)
         metrics = pd.read_csv(locator.valid_metrics_path, header=None)
         curr_config.update(metrics.set_index(0)[1])
         results.append(curr_config)

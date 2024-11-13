@@ -12,8 +12,11 @@ from utils.utils import PathLocator
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def workflow(locator, num_epochs, tgt_type, graph_type, eval_test=False):
+def workflow(locator, eval_test=False):
     leave_out = locator.config["data_split"]
+    tgt_type = locator.config["target_type"]
+    graph_type = locator.config["graph_type"]
+    num_epochs = locator.config["num_epochs"]
     train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
     train_data = train_loader.loader.data
     model = create_model(locator, train_data).to(DEVICE)
@@ -30,22 +33,14 @@ def main():
     parser = argparse.ArgumentParser(
         description=("Train GNN with this config file"),
     )
-
     parser.add_argument("config_path", type=str)
     parser.add_argument("output_path", type=str)
-    parser.add_argument("--num_epochs", dest="num_epochs", type=int, default=1000)
-
-    parser.add_argument("--target_type", dest="target_type", default="orf")
-    parser.add_argument("--graph_type", dest="graph_type", default="st_expanded")
     args = parser.parse_args()
-
     locator = PathLocator(args.config_path, args.output_path)
     if os.path.isfile(locator.test_results_path):
         print(f"{locator.test_results_path} exists. Skipping...")
         return
-    workflow(
-        locator, args.num_epochs, args.target_type, args.graph_type, eval_test=True
-    )
+    workflow(locator, eval_test=True)
 
 
 if __name__ == "__main__":
