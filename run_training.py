@@ -2,6 +2,7 @@ import argparse
 import os.path
 
 import torch
+from torch.utils.tensorboard.writer import SummaryWriter
 
 from model import create_model
 from motive import get_loaders
@@ -25,6 +26,14 @@ def workflow(locator, eval_test=False):
         results, test_scores = run_test(model, test_loader, best_th)
         save_metrics(test_scores, locator.test_metrics_path)
         results.to_parquet(locator.test_results_path)
+        writer = SummaryWriter(
+            log_dir=locator.summary_path, comment=locator.config["model_name"]
+        )
+        writer.add_hparams(
+            locator.config,
+            {f"test/{k}": v for k, v in test_scores.items()},
+            run_name="./",
+        )
         print(test_scores)
 
 
