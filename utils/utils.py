@@ -20,11 +20,12 @@ class PathLocator:
     def __init__(self, config_path: str | Path, output_path: str | Path):
         with open(config_path, encoding="utf8") as freader:
             self.config = json.load(freader)
-            self.hashid = hashname(self.config)
-            graph_type = self.config["graph_type"]
-            split = self.config["data_split"]
-            tgt_type = self.config["target_type"]
-            model = self.config["model_name"]
+
+        self.hashid = hashname(self.config)
+        graph_type = self.config["graph_type"]
+        split = self.config["data_split"]
+        tgt_type = self.config["target_type"]
+        model = self.config["model_name"]
 
         root_dir = (
             Path(output_path) / tgt_type / split / graph_type / model / self.hashid
