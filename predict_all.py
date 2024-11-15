@@ -138,7 +138,7 @@ leave_out = locator.config["data_split"]
 train_data, valid_data, test_data = load_graph_helper(leave_out, tgt_type, graph_type)
 train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
 
-model = create_model(locator, train_data).to(DEVICE)
+model = create_model(locator.config, train_data).to(DEVICE)
 best_params = torch.load(locator.model_path, weights_only=True)
 best_th = best_params["best_th"]
 model.load_state_dict(best_params["model_state_dict"])

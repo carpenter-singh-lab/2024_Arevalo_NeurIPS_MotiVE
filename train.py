@@ -136,7 +136,7 @@ def train_loop(
     for epoch in tqdm(range(1, num_epochs + 1)):
         logits, y_true, edges, loss = run_train_epoch(model, train_loader, optimizer)
         writer.add_scalar("train/loss", loss, epoch)
-        if epoch % 20 > 0 and locator.config["model_name"] != "cosine":
+        if epoch % locator.config["eval_freq"] > 0:
             continue
         best_th = get_best_th(logits, y_true)
         metrics = ev.evaluate(logits, y_true, best_th, edges)

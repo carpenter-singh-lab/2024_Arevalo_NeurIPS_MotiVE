@@ -6,7 +6,6 @@ from torch_geometric.nn import MLP as tMLP
 from torch_geometric.nn import GATv2Conv, GINConv, SAGEConv, to_hetero
 
 from motive import get_counts
-from utils.utils import PathLocator
 
 
 class GNN(torch.nn.Module):
@@ -199,16 +198,16 @@ class Cosine(torch.nn.Module):
         return logits
 
 
-def create_model(locator: PathLocator, data):
-    model_name = locator.config["model_name"]
+def create_model(config, data):
+    model_name = config["model_name"]
     num_sources, num_targets, num_features = get_counts(data)
 
     if model_name in ("gnn", "gat", "gin"):
         GNNClass = {"gnn": GNN, "gat": GAT, "gin": GIN}.get(model_name)
-        initialization = locator.config["initialization"]
+        initialization = config["initialization"]
         if initialization == "cp":
             model = GraphSAGE_CP(
-                int(locator.config["hidden_channels"]),
+                int(config["hidden_channels"]),
                 num_sources,
                 num_targets,
                 data,
@@ -216,7 +215,7 @@ def create_model(locator: PathLocator, data):
             )
         elif initialization == "embs":
             model = GraphSAGE_Embs(
-                int(locator.config["hidden_channels"]),
+                int(config["hidden_channels"]),
                 num_sources,
                 num_targets,
                 data,
@@ -226,7 +225,7 @@ def create_model(locator: PathLocator, data):
         model = MLP(
             num_features["source"],
             num_features["target"],
-            hidden_size=int(locator.config["hidden_channels"]),
+            hidden_size=int(config["hidden_channels"]),
         )
     elif model_name == "bilinear":
         model = Bilinear(

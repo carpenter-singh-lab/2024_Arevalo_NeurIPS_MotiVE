@@ -13,14 +13,14 @@ from utils.utils import PathLocator
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def workflow(locator, eval_test=False):
+def workflow(locator: PathLocator, eval_test=False):
     leave_out = locator.config["data_split"]
     tgt_type = locator.config["target_type"]
     graph_type = locator.config["graph_type"]
     num_epochs = locator.config["num_epochs"]
     train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
     train_data = train_loader.loader.data
-    model = create_model(locator, train_data).to(DEVICE)
+    model = create_model(locator.config, train_data).to(DEVICE)
     best_th = train_loop(model, locator, train_loader, val_loader, num_epochs)
     if eval_test:
         results, test_scores = run_test(model, test_loader, best_th)
