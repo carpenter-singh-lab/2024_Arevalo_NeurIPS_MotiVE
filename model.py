@@ -199,7 +199,7 @@ class Cosine(torch.nn.Module):
 
 
 def create_model(config, data):
-    model_name = config["model_name"]
+    model_name = config["model"]
     num_sources, num_targets, num_features = get_counts(data)
 
     if model_name in ("gnn", "gat", "gin"):

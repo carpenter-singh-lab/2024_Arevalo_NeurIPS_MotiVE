@@ -1,10 +1,11 @@
+from pathlib import Path
 import pandas as pd
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm.autonotebook import tqdm
 
-from utils.evaluate import Evaluator, get_best_th, save_metrics
+from utils.evaluate import Evaluator, get_best_th
 
 SEED = 2024313
 
@@ -85,15 +86,11 @@ def run_test(model, test_loader, th):
     sources = torch.cat(src_ids, dim=0)
     targets = torch.cat(tgt_ids, dim=0)
 
-    y_true = y_true.to(torch.int32)
-    e = Evaluator("configs/eval/test_evaluation_params.json")
-    edges = torch.stack([sources, targets])
-    test_metrics = e.evaluate(logits, y_true, th, edges)
-
     # save all to results table
     results = pd.DataFrame(sources.cpu().numpy(), columns=["source"])
     results["target"] = targets.cpu().numpy()
     results["score"] = scores.cpu().numpy()
+    results["logits"] = logits.cpu().numpy()
     results["y_pred"] = y_pred.cpu().numpy()
     results["y_true"] = y_true.cpu().numpy()
 
@@ -101,7 +98,7 @@ def run_test(model, test_loader, th):
     results["percentile"] = results.score.rank(pct=True)
     results.set_index(["source", "target"], inplace=True)
 
-    return results, test_metrics
+    return results
 
 
 def log_gradients_in_model(model, writer, step):
@@ -112,10 +109,10 @@ def log_gradients_in_model(model, writer, step):
 
 def train_loop(
     model,
-    locator,
+    model_path,
+    config,
     train_loader,
     val_loader,
-    num_epochs,
     log_gradients=False,
 ):
     torch.manual_seed(SEED)
@@ -124,19 +121,20 @@ def train_loop(
     if model_params:
         optimizer = torch.optim.AdamW(
             model_params,
-            lr=locator.config["learning_rate"],
-            weight_decay=locator.config["weight_decay"],
+            lr=config["learning_rate"],
+            weight_decay=config["weight_decay"],
         )
+    summary_path = Path(model_path).parent
     writer = SummaryWriter(
-        log_dir=locator.summary_path, comment=locator.config["model_name"]
+        log_dir=summary_path, comment=config["model"]
     )
     ev = Evaluator("configs/eval/test_evaluation_params.json")
     best_metric = float("-inf")
-    criteria = locator.config["data_split"] + "_mAP"
-    for epoch in tqdm(range(1, num_epochs + 1)):
+    criteria = config["leave_out"] + "_mAP"
+    for epoch in tqdm(range(1, config["num_epochs"] + 1)):
         logits, y_true, edges, loss = run_train_epoch(model, train_loader, optimizer)
         writer.add_scalar("train/loss", loss, epoch)
-        if epoch % locator.config["eval_freq"] > 0:
+        if epoch % config["eval_freq"] > 0:
             continue
         best_th = get_best_th(logits, y_true)
         metrics = ev.evaluate(logits, y_true, best_th, edges)
@@ -156,13 +154,12 @@ def train_loop(
                 model_state_dict=model.state_dict(),
                 best_th=best_th,
             )
-            torch.save(state, locator.model_path)
-            save_metrics(metrics, locator.valid_metrics_path)
+            torch.save(state, model_path)
 
         if log_gradients:
             log_gradients_in_model(model, writer, epoch)
 
-    best_params = torch.load(locator.model_path, weights_only=True)
+    best_params = torch.load(model_path, weights_only=True)
     best_th = best_params["best_th"]
     model.load_state_dict(best_params["model_state_dict"])
     print(f"Best {criteria}: " + str(best_metric))
