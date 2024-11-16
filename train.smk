@@ -6,6 +6,9 @@ import evaluate
 config["hash"] = hashname(config)
 
 
+include: "plot.smk"
+
+
 wildcard_constraints:
     subset="train|valid|test",
     leave_out="source|target|random",
@@ -21,6 +24,10 @@ rule all:
             "test/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/{infer_mode}/test/metrics.parquet",
             **config,
             infer_mode=["sampled", "cartesian"],
+        ),
+        expand(
+            "test/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/waterfall.pdf",
+            **config,
         ),
 
 

@@ -126,7 +126,7 @@ def run_test_mini(model, test_loader, th):
     return results, test_metrics
 
 
-config_path = "test/orf/target/st_expanded/gnn/7aebb0/config.json"
+config_path = "test/orf/target/st_expanded/gnn/410618/config.json"
 output_path = "test/"
 analysis_path = Path(config_path).parent / "analysis"
 analysis_path.mkdir(exist_ok=True)
@@ -191,9 +191,9 @@ pivot.to_csv(analysis_path / "pivot.csv")
 plt.savefig(analysis_path / "clustermap.png", bbox_inches="tight")
 
 ann = pd.read_parquet("./inputs/annotations/compound_gene.parquet")
+ann["compound"] = ann["inchikey"].fillna("").str[:14]
 results_mini["compound"] = src_names[results_mini.index.get_level_values("source")]
 results_mini["gene"] = tgt_names[results_mini.index.get_level_values("target")]
-ann["compound"] = ann["inchikey"].fillna("").str[:14]
 ann_results = results_mini.merge(
     ann, left_on=["compound", "gene"], right_on=["compound", "target"], how="left"
 )

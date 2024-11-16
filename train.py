@@ -110,8 +110,6 @@ def run_test(model, test_loader, th=0):
 
     results.sort_values(by=["score"], ascending=False, inplace=True)
     results["percentile"] = results.score.rank(pct=True)
-    results.set_index(["source", "target"], inplace=True)
-
     return results
 
 

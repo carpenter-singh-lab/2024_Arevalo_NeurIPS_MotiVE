@@ -28,6 +28,8 @@ def train(config_path, model_path):
 
 
 def infer_sampled(config_path, model_path, subset, preds_path):
+    # TODO: Make infer_sampled and infer_cartesian compatible (maybe create a
+    # loader for cartesian and use a single function
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
     model.load_state_dict(best_params["model_state_dict"])
