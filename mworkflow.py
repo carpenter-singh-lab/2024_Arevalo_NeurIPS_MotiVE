@@ -1,14 +1,11 @@
 import json
-from pathlib import Path
 
 import pandas as pd
 import torch
-from torch.utils.tensorboard.writer import SummaryWriter
 
 from model import create_model
 from motive import get_loaders
 from train import run_test, train_loop
-from utils.evaluate import save_metrics
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -33,16 +30,14 @@ def train(config_path, model_path):
 def infer_sampled(config_path, model_path, subset, preds_path):
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
-    best_th = best_params["best_th"]
     model.load_state_dict(best_params["model_state_dict"])
-    preds = run_test(model, loaders[subset], best_th)
+    preds = run_test(model, loaders[subset])
     preds.to_parquet(preds_path)
 
 
-def infer_cartesian(config_path, model_path, subset, preds_path):
+def infer_cartesian(config_path, model_path, subset, preds_path, th=0):
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
-    best_th = best_params["best_th"]
     model.load_state_dict(best_params["model_state_dict"])
 
     data = loaders[subset].loader.data
@@ -69,19 +64,7 @@ def infer_cartesian(config_path, model_path, subset, preds_path):
             "score": scores,
             "logits": logits,
             "y_true": y_true,
-            "y_pred": logits > best_th,
+            "y_pred": logits > th,
         }
     )
     scores.to_parquet(preds_path)
-
-
-def register_tensorboard(config_path, scores_path):
-    # Register results in tensorboards
-    summary_path = Path(model_path).parent
-    writer = SummaryWriter(log_dir=summary_path, comment=config["model"])
-    writer.add_hparams(
-        config,
-        {f"test/{k}": v for k, v in test_scores.items()},
-        run_name="./",
-    )
-    save_metrics(test_scores, test_metrics_path)

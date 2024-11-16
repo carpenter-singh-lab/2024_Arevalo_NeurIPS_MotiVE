@@ -1,11 +1,10 @@
 from pathlib import Path
+
 import pandas as pd
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard.writer import SummaryWriter
 from tqdm.autonotebook import tqdm
-
-from utils.evaluate import Evaluator, get_best_th
 
 SEED = 2024313
 
@@ -30,7 +29,7 @@ def run_train_epoch(model, loader, optimizer):
     model.train()
     edges, logits, y_true = [], [], []
     loss = 0
-    for num_batches, batch in enumerate(loader):
+    for num_batches, batch in enumerate(loader, 1):
         edges.append(batch["binds"].edge_label_index)
         outs = run_update(model, optimizer, batch)
         logits.append(outs[0].detach())
@@ -39,7 +38,7 @@ def run_train_epoch(model, loader, optimizer):
     logits = torch.cat(logits)
     y_true = torch.cat(y_true)
     edges = torch.cat(edges, dim=1)
-    loss /= (num_batches + 1)
+    loss /= num_batches
     return logits, y_true, edges, loss
 
 
@@ -60,7 +59,22 @@ def run_inference_epoch(model, loader):
 
 
 @torch.inference_mode
-def run_test(model, test_loader, th):
+def compute_loss(model, loader):
+    loss = 0
+    model.eval()
+    for num_batches, batch in enumerate(loader, 1):
+        logits = model(batch)
+        paired = batch.bpr_indices
+        positives, negatives = logits[paired].T
+        num_nodes = batch.bpr_weights.sum()
+        errors = -F.logsigmoid(positives - negatives) * batch.bpr_weights
+        loss += errors.sum() / num_nodes
+    loss /= num_batches
+    return loss
+
+
+@torch.inference_mode
+def run_test(model, test_loader, th=0):
     logits = []
     y_true = []
     src_ids = []
@@ -112,7 +126,7 @@ def train_loop(
     model_path,
     config,
     train_loader,
-    val_loader,
+    valid_loader,
     log_gradients=False,
 ):
     torch.manual_seed(SEED)
@@ -125,42 +139,23 @@ def train_loop(
             weight_decay=config["weight_decay"],
         )
     summary_path = Path(model_path).parent
-    writer = SummaryWriter(
-        log_dir=summary_path, comment=config["model"]
-    )
-    ev = Evaluator("configs/eval/test_evaluation_params.json")
-    best_metric = float("-inf")
-    criteria = config["leave_out"] + "_mAP"
+    writer = SummaryWriter(log_dir=summary_path, comment=config["model"])
+    best_loss = float("inf")
     for epoch in tqdm(range(1, config["num_epochs"] + 1)):
         logits, y_true, edges, loss = run_train_epoch(model, train_loader, optimizer)
         writer.add_scalar("train/loss", loss, epoch)
-        if epoch % config["eval_freq"] > 0:
-            continue
-        best_th = get_best_th(logits, y_true)
-        metrics = ev.evaluate(logits, y_true, best_th, edges)
-        for metric, score in metrics.items():
-            writer.add_scalar("train/" + metric, score, epoch)
-        writer.flush()
-
-        logits, y_true, edges = run_inference_epoch(model, val_loader)
-        metrics = ev.evaluate(logits, y_true, best_th, edges)
-        for metric, score in metrics.items():
-            writer.add_scalar("valid/" + metric, score, epoch)
-        writer.flush()
-
-        if metrics[criteria] > best_metric:
-            best_metric = metrics[criteria]
-            state = dict(
-                model_state_dict=model.state_dict(),
-                best_th=best_th,
-            )
-            torch.save(state, model_path)
-
-        if log_gradients:
-            log_gradients_in_model(model, writer, epoch)
+        if epoch % config["eval_freq"] == 0:
+            loss = compute_loss(model, valid_loader)
+            writer.add_scalar("valid/loss", loss, epoch)
+            writer.flush()
+            if loss < best_loss:
+                best_loss = loss
+                state = dict(
+                    model_state_dict=model.state_dict(),
+                )
+                torch.save(state, model_path)
+            if log_gradients:
+                log_gradients_in_model(model, writer, epoch)
 
     best_params = torch.load(model_path, weights_only=True)
-    best_th = best_params["best_th"]
     model.load_state_dict(best_params["model_state_dict"])
-    print(f"Best {criteria}: " + str(best_metric))
-    return best_th

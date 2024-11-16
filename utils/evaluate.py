@@ -47,18 +47,6 @@ def compute_map(df):
     return ap_scores
 
 
-@torch.inference_mode
-def get_best_th(logits, y_true):
-    return 0
-    # TODO: Check binary f1 is unimodal so that binary search fits
-    ths = torch.unique(logits).cpu().numpy()
-    best_f1 = 1
-    ix = bisect_left(
-        ths, -best_f1, key=lambda th: -binary_f1_score(logits, y_true, threshold=th)
-    )
-    return ths[ix]
-
-
 class Evaluator:
     def __init__(self, config_path: str):
         with open(config_path, encoding="utf8") as freader:
@@ -240,6 +228,7 @@ class Evaluator:
             scores[f"{split}_robhan_num"] = num
             scores[f"{split}_robhan_pct"] = pct
         return scores
+
 
 def save_metrics(scores: dict, output_path: str):
     pd.DataFrame.from_dict(scores, "index", dtype=np.float32).to_csv(

@@ -140,7 +140,7 @@ train_data, valid_data, test_data = load_graph_helper(leave_out, tgt_type, graph
 train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
 
 best_params = torch.load(model_path, weights_only=True)
-best_th = best_params["best_th"]
+best_th = 0
 model.load_state_dict(best_params["model_state_dict"])
 
 results_mini, test_metrics_mini = run_test_mini(model, test_loader, best_th)
