@@ -23,7 +23,7 @@ class PathLocator:
 
         self.hashid = hashname(self.config)
         graph_type = self.config["graph_type"]
-        split = self.config["data_split"]
+        split = self.config["leave_out"]
         tgt_type = self.config["target_type"]
         model = self.config["model_name"]
 

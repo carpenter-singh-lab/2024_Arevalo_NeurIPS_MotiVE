@@ -122,10 +122,11 @@ def success_at_k_ratio(preds_path, node, th, num_path, pct_path):
     np.array(pct).tofile(pct_path)
 
 
-def collate(*args):
+def collate(*args, infer_mode):
     *score_paths, config_path, metrics_path = args
     with open(config_path) as f:
         record = json.load(f)
+    record["infer_mode"] = infer_mode
     for path in map(Path, score_paths):
         record[path.stem] = np.fromfile(path).item()
     pd.DataFrame([record]).to_parquet(metrics_path)

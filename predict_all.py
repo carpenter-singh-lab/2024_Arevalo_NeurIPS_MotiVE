@@ -1,3 +1,4 @@
+from pathlib import Path
 import itertools
 from pprint import pprint
 
@@ -8,11 +9,10 @@ import torch
 from matplotlib import pyplot as plt
 
 from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter, anno_label
-from model import create_model
 from motive import get_all_st_edges, get_loaders, load_graph_helper
 from motive.sample_negatives import negative_sampling, select_nodes_to_sample
 from utils.evaluate import Evaluator, compute_map
-from utils.utils import PathLocator
+from mworkflow import init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 mapper = {
@@ -126,20 +126,20 @@ def run_test_mini(model, test_loader, th):
     return results, test_metrics
 
 
-config_path = "assembled/orf/target/st_expanded/cosine/7ba97e/config.json"
-output_path = "assembled"
-
-locator = PathLocator(config_path, output_path)
-analysis_path = locator.summary_path / "analysis"
+config_path = "test/orf/target/st_expanded/gnn/7aebb0/config.json"
+output_path = "test/"
+analysis_path = Path(config_path).parent / "analysis"
 analysis_path.mkdir(exist_ok=True)
-tgt_type = locator.config["target_type"]
-graph_type = locator.config["graph_type"]
-leave_out = locator.config["data_split"]
+
+config, model, loaders = init(config_path)
+model_path = Path(config_path).parent / "weights.pt"
+tgt_type = config["target_type"]
+graph_type = config["graph_type"]
+leave_out = config["leave_out"]
 train_data, valid_data, test_data = load_graph_helper(leave_out, tgt_type, graph_type)
 train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
 
-model = create_model(locator.config, train_data).to(DEVICE)
-best_params = torch.load(locator.model_path, weights_only=True)
+best_params = torch.load(model_path, weights_only=True)
 best_th = best_params["best_th"]
 model.load_state_dict(best_params["model_state_dict"])
 
@@ -197,7 +197,6 @@ ann["compound"] = ann["inchikey"].fillna("").str[:14]
 ann_results = results_mini.merge(
     ann, left_on=["compound", "gene"], right_on=["compound", "target"], how="left"
 )
-
 
 scores["rank"] = (
     scores.groupby("genes")["score"]

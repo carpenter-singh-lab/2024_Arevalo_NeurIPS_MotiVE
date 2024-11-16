@@ -1,6 +1,6 @@
 import json
 from utils.utils import hashname
-import workflow
+import mworkflow
 import evaluate
 
 config["hash"] = hashname(config)
@@ -48,7 +48,7 @@ rule metrics:
     output:
         "{output_path}/{infer_mode}/{subset}/metrics.parquet",
     run:
-        evaluate.collate(*input, *output)
+        evaluate.collate(*input, *output, infer_mode=wildcards.infer_mode)
 
 
 rule save_config:
@@ -68,7 +68,7 @@ rule train:
     output:
         "{output_path}/weights.pt",
     run:
-        workflow.train(*input, *output)
+        mworkflow.train(*input, *output)
 
 
 rule infer_sampled:
@@ -78,7 +78,7 @@ rule infer_sampled:
     output:
         "{output_path}/sampled/{subset}/results.parquet",
     run:
-        workflow.infer_sampled(
+        mworkflow.infer_sampled(
             input.config_path, input.model_path, wildcards.subset, *output
         )
 
@@ -90,7 +90,7 @@ rule infer_cartesian:
     output:
         "{output_path}/cartesian/{subset}/results.parquet",
     run:
-        workflow.infer_cartesian(
+        mworkflow.infer_cartesian(
             input.config_path, input.model_path, wildcards.subset, *output
         )
 
