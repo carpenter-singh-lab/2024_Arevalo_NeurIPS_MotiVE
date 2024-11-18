@@ -1,19 +1,9 @@
-import io
-
 import matplotlib.tri as tri
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-
-def to_numpy(fig):
-    with io.BytesIO() as buff:
-        fig.savefig(buff, format="raw")
-        buff.seek(0)
-        data = np.frombuffer(buff.getvalue(), dtype=np.uint8)
-    w, h = fig.canvas.get_width_height()
-    array = data.reshape((int(h), int(w), -1))
-    return array
+from .base import to_numpy
 
 
 def contour(results: pd.DataFrame, criteria: str):
