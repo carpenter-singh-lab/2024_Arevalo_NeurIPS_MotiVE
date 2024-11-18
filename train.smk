@@ -45,10 +45,10 @@ rule metrics:
                 "bce",
                 "map_source",
                 "map_target",
-                "success_at_0.01_source_num",
-                "success_at_0.01_source_pct",
-                "success_at_0.01_target_num",
-                "success_at_0.01_target_pct",
+                "success_at_15_source_num",
+                "success_at_15_source_pct",
+                "success_at_15_target_num",
+                "success_at_15_target_pct",
             ],
         ),
         "{output_path}/config.json",
@@ -193,11 +193,11 @@ rule mean_average_precision:
         evaluate.mean_average_precision(*input, wildcards.node, *output)
 
 
-rule success_at_k_ratio:
+rule success_at_k:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
         "{output_path}/{subset}/metrics/success_at_{k}_{node}_num.npy",
         "{output_path}/{subset}/metrics/success_at_{k}_{node}_pct.npy",
     run:
-        evaluate.success_at_k_ratio(*input, wildcards.node, float(wildcards.k), *output)
+        evaluate.success_at_k(*input, wildcards.node, int(wildcards.k), *output)

@@ -109,16 +109,16 @@ def mean_average_precision(ap_path, node, map_path):
     np.save(map_path, map_score, allow_pickle=False)
 
 
-def success_at_k_ratio(preds_path, node, th, num_path, pct_path):
+def success_at_k(preds_path, node, k, num_path, pct_path):
     """Robhan metric"""
-    dframe = pd.read_parquet(preds_path).reset_index()
+    dframe = pd.read_parquet(preds_path)
     dframe["rank"] = dframe.groupby(node)["score"].rank(
         method="min", ascending=False, pct=False
     )
     dframe["rank_pct"] = dframe.groupby(node)["score"].rank(
         method="min", ascending=False, pct=True
     )
-    num = dframe.query(f"rank_pct <= {th} and y_true==1")[node].nunique()
+    num = dframe.query(f"rank <= {k} and y_true")[node].nunique()
     pct = num / dframe[node].nunique()
     np.save(num_path, num, allow_pickle=False)
     np.save(pct_path, pct, allow_pickle=False)

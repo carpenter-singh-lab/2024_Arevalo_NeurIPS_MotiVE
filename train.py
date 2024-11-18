@@ -106,10 +106,8 @@ def run_test(model, test_loader, th=0):
     results["score"] = scores.cpu().numpy()
     results["logits"] = logits.cpu().numpy()
     results["y_pred"] = y_pred.cpu().numpy()
-    results["y_true"] = y_true.cpu().numpy()
+    results["y_true"] = y_true.cpu().numpy().astype(bool)
 
-    results.sort_values(by=["score"], ascending=False, inplace=True)
-    results["percentile"] = results.score.rank(pct=True)
     return results
 
 

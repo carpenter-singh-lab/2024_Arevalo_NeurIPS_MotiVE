@@ -37,6 +37,7 @@ def infer_sampled(config_path, model_path, subset, preds_path):
     preds.to_parquet(preds_path)
 
 
+@torch.inference_mode
 def infer_cartesian(config_path, model_path, subset, preds_path, th=0):
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
@@ -50,23 +51,22 @@ def infer_cartesian(config_path, model_path, subset, preds_path, th=0):
     y_true = torch.any(torch.all(edges.T[:, None] == gt_edges.T, axis=-1), axis=-1)
     data["binds"].edge_label_index = edges
     data["binds"].edge_label = y_true
-    with torch.inference_mode():
-        model.eval()
-        logits = model(data.to(DEVICE))
-        scores = torch.sigmoid(logits)
 
-        edges = edges.cpu().numpy()
-        y_true = y_true.cpu().numpy()
-        logits = logits.cpu().numpy()
-        scores = scores.cpu().numpy()
-    scores = pd.DataFrame(
+    model.eval()
+    logits = model(data.to(DEVICE))
+    scores = torch.sigmoid(logits).cpu().numpy()
+    edges = edges.cpu().numpy()
+    y_true = y_true.cpu().numpy()
+    logits = logits.cpu().numpy()
+
+    preds = pd.DataFrame(
         {
             "source": edges[0],
             "target": edges[1],
             "score": scores,
             "logits": logits,
-            "y_true": y_true,
             "y_pred": logits > th,
+            "y_true": y_true,
         }
     )
-    scores.to_parquet(preds_path)
+    preds.to_parquet(preds_path)
