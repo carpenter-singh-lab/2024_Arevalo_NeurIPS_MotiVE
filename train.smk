@@ -21,7 +21,7 @@ wildcard_constraints:
 rule all:
     input:
         expand(
-            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/{infer_mode}/test/metrics.parquet",
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/{infer_mode}/test/metrics.done",
             **config,
             infer_mode=["sampled", "cartesian"],
         ),
@@ -56,6 +56,16 @@ rule metrics:
         "{output_path}/{infer_mode}/{subset}/metrics.parquet",
     run:
         evaluate.collate(*input, *output, infer_mode=wildcards.infer_mode)
+
+
+rule register_tensorboard:
+    input:
+        "{output_path}/config.json",
+        "{output_path}/{infer_mode}/{subset}/metrics.parquet",
+    output:
+        touch("{output_path}/{infer_mode}/{subset}/metrics.done"),
+    run:
+        evaluate.register_tensorboard(*input, wildcards.subset)
 
 
 rule save_config:

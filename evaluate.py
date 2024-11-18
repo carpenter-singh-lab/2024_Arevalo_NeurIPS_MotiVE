@@ -9,6 +9,7 @@ from copairs import compute
 from copairs.map.average_precision import build_rank_lists
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from torch.nn import functional as F
+from torch.utils.tensorboard.writer import SummaryWriter
 
 
 def accuracy(preds_path, acc_path):
@@ -131,3 +132,16 @@ def collate(*args, infer_mode):
     for path in map(Path, score_paths):
         record[path.stem] = np.load(path).item()
     pd.DataFrame([record]).to_parquet(metrics_path)
+
+
+def register_tensorboard(config_path, metrics_path, subset):
+    with open(config_path) as f:
+        config = json.load(f)
+    metrics = pd.read_parquet(metrics_path).iloc[0].to_dict()
+    for k in config:
+        metrics.pop(k, None)
+    config["infer_mode"] = metrics.pop("infer_mode")
+    summary_path = Path(config_path).parent
+    writer = SummaryWriter(log_dir=summary_path, comment=config["model"])
+    values = {f"{subset}/{k}": v for k, v in metrics.items()}
+    writer.add_hparams(config, values, run_name=f"./{config['infer_mode']}/")
