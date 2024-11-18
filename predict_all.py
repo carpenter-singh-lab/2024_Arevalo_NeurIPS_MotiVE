@@ -1,5 +1,4 @@
 from pathlib import Path
-import itertools
 from pprint import pprint
 
 import numpy as np
@@ -8,10 +7,9 @@ import seaborn as sns
 import torch
 from matplotlib import pyplot as plt
 
-from PyComplexHeatmap import HeatmapAnnotation, anno_barplot, oncoPrintPlotter, anno_label
 from motive import get_all_st_edges, get_loaders, load_graph_helper
 from motive.sample_negatives import negative_sampling, select_nodes_to_sample
-from utils.evaluate import Evaluator, compute_map
+from utils.evaluate import Evaluator
 from mworkflow import init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -180,7 +178,6 @@ scores = pd.DataFrame(
 e = Evaluator("configs/eval/test_evaluation_params.json")
 e.config["Robhan_th"] = 0.01
 all_metrics = e._robhan(logits, y_true, test_data["binds"].edge_label_index)
-ap_scores = compute_map(scores.rename(columns={"inchi": "source", "genes": "target"}))
 
 pivot = scores.pivot(index="inchi", columns="genes", values="score")
 clustergrid = sns.clustermap(pivot, cmap="vlag")
@@ -296,72 +293,3 @@ for _ in range(100):
 print("Random baseline")
 print(pd.Series(rnds).describe())
 print(all_metrics)
-
-plt.figure(figsize=(12, 8))
-
-wf = (
-    scores_ann.query("rank<=15")[["genes", "inchi", "rel_type"]]
-    .drop_duplicates()
-    .copy()
-)
-wf["value"] = 1
-counts = wf["rel_type"].value_counts()
-cart = itertools.product(wf["genes"].unique(), wf["inchi"].unique())
-cart = pd.DataFrame(cart, columns=["genes", "inchi"])
-cart["value"] = 0
-cart.set_index(["genes", "inchi"], inplace=True)
-known = wf[["genes", "inchi"]].drop_duplicates().itertuples(index=False)
-cart.loc[known, "value"] = 1
-cart = cart.query("value==0").reset_index().copy()
-cart["rel_type"] = wf["rel_type"].iloc[0]
-wf = pd.concat([wf, cart])
-wf = wf.sort_values(by="rel_type", key=lambda x: x.map(counts), ascending=False)
-
-wf = (
-    wf.pivot(index=["genes", "inchi"], columns="rel_type", values="value")
-    .fillna(0)
-    .astype(int)
-    .reset_index()
-)
-cols = list(counts.index)
-wf = wf[["genes", "inchi"] + cols]
-print(wf.head())
-
-colors = plt.cm.tab20(range(20))
-colors = [f"#{int(c[0]*255):02x}{int(c[1]*255):02x}{int(c[2]*255):02x}" for c in colors]
-colors = colors[: len(cols)]
-
-plt.close("all")
-plt.figure(figsize=(18, 14))
-gene_counts = wf.groupby("genes")[cols].sum()
-inchi_counts = wf.groupby("inchi")[cols].sum()
-inchi_counts_all = (
-    scores.query("rank<=15").inchi.value_counts()[inchi_counts.index]
-    / scores["genes"].nunique()
-)
-inchi_counts_all = inchi_counts_all.apply("{:,.2%}".format)
-top_annotation = HeatmapAnnotation(
-    axis=1, rel_type=anno_barplot(gene_counts, colors=colors), legend=False
-)
-right_annotation = HeatmapAnnotation(
-    axis=0,
-    orientation="right",
-    inchi=anno_barplot(inchi_counts, colors=colors, legend=False),
-    hits=anno_label(inchi_counts_all, colors="black"),
-    label_kws={"visible": False},
-)
-op = oncoPrintPlotter(
-    data=wf,
-    y="inchi",
-    x="genes",
-    values=cols,
-    colors=colors,
-    label="rel_type",
-    show_rownames=True,
-    show_colnames=True,
-    row_names_side="left",
-    top_annotation=top_annotation,
-    right_annotation=right_annotation,
-    legend_width=100,
-)
-plt.savefig(analysis_path / "oncoPrint.pdf", bbox_inches="tight")

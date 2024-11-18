@@ -21,12 +21,12 @@ wildcard_constraints:
 rule all:
     input:
         expand(
-            "test/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/{infer_mode}/test/metrics.parquet",
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/{infer_mode}/test/metrics.parquet",
             **config,
             infer_mode=["sampled", "cartesian"],
         ),
         expand(
-            "test/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/waterfall.pdf",
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/waterfall.pdf",
             **config,
         ),
 
@@ -34,7 +34,7 @@ rule all:
 rule metrics:
     input:
         expand(
-            "{{output_path}}/{{infer_mode}}/{{subset}}/metrics/{metric}.bin",
+            "{{output_path}}/{{infer_mode}}/{{subset}}/metrics/{metric}.npy",
             metric=[
                 "acc",
                 "roc_auc",
@@ -61,7 +61,7 @@ rule metrics:
 rule save_config:
     output:
         expand(
-            "test/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/config.json",
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/config.json",
             **config,
         ),
     run:
@@ -106,7 +106,7 @@ rule accuracy:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/acc.bin",
+        "{output_path}/{subset}/metrics/acc.npy",
     run:
         evaluate.accuracy(*input, *output)
 
@@ -115,7 +115,7 @@ rule roc_auc:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/roc_auc.bin",
+        "{output_path}/{subset}/metrics/roc_auc.npy",
     run:
         evaluate.accuracy(*input, *output)
 
@@ -124,7 +124,7 @@ rule hits_at_k:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/hits_at_{k}.bin",
+        "{output_path}/{subset}/metrics/hits_at_{k}.npy",
     run:
         evaluate.hits_at_k(*input, int(wildcards.k), *output)
 
@@ -133,7 +133,7 @@ rule precision_at_k:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/precision_at_{k}.bin",
+        "{output_path}/{subset}/metrics/precision_at_{k}.npy",
     run:
         evaluate.precision_at_k(*input, int(wildcards.k), *output)
 
@@ -142,7 +142,7 @@ rule f1:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/f1.bin",
+        "{output_path}/{subset}/metrics/f1.npy",
     run:
         evaluate.f1(*input, *output)
 
@@ -151,7 +151,7 @@ rule mrr:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/mrr.bin",
+        "{output_path}/{subset}/metrics/mrr.npy",
     run:
         evaluate.mrr(*input, *output)
 
@@ -160,7 +160,7 @@ rule bce:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/bce.bin",
+        "{output_path}/{subset}/metrics/bce.npy",
     run:
         evaluate.bce(*input, *output)
 
@@ -178,7 +178,7 @@ rule mean_average_precision:
     input:
         "{output_path}/{subset}/metrics/average_precision.parquet",
     output:
-        "{output_path}/{subset}/metrics/map_{node}.bin",
+        "{output_path}/{subset}/metrics/map_{node}.npy",
     run:
         evaluate.mean_average_precision(*input, wildcards.node, *output)
 
@@ -187,7 +187,7 @@ rule success_at_k_ratio:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/success_at_{k}_{node}_num.bin",
-        "{output_path}/{subset}/metrics/success_at_{k}_{node}_pct.bin",
+        "{output_path}/{subset}/metrics/success_at_{k}_{node}_num.npy",
+        "{output_path}/{subset}/metrics/success_at_{k}_{node}_pct.npy",
     run:
         evaluate.success_at_k_ratio(*input, wildcards.node, float(wildcards.k), *output)

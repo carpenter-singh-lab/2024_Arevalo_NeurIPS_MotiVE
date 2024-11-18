@@ -83,7 +83,6 @@ def waterfall(config_path, preds_path, waterfall_path):
     )
     cols = list(counts.index)
     wf = wf[["gene", "compound"] + cols]
-    print(wf.head())
 
     colors = plt.cm.tab20(range(20))
     colors = [
@@ -101,7 +100,10 @@ def waterfall(config_path, preds_path, waterfall_path):
     )
     inchi_counts_all = inchi_counts_all.apply("{:,.2%}".format)
     top_annotation = HeatmapAnnotation(
-        axis=1, rel_type=anno_barplot(gene_counts, colors=colors), legend=False
+        axis=1,
+        rel_type=anno_barplot(gene_counts, colors=colors),
+        legend=False,
+        verbose=0,
     )
     right_annotation = HeatmapAnnotation(
         axis=0,
@@ -109,6 +111,7 @@ def waterfall(config_path, preds_path, waterfall_path):
         compound=anno_barplot(inchi_counts, colors=colors, legend=False),
         hits=anno_label(inchi_counts_all, colors="black"),
         label_kws={"visible": False},
+        verbose=0,
     )
     oncoPrintPlotter(
         data=wf,
@@ -123,5 +126,6 @@ def waterfall(config_path, preds_path, waterfall_path):
         top_annotation=top_annotation,
         right_annotation=right_annotation,
         legend_width=100,
+        verbose=0,
     )
     plt.savefig(waterfall_path, bbox_inches="tight")

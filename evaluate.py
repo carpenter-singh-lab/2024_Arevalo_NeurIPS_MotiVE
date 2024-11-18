@@ -14,13 +14,13 @@ from torch.nn import functional as F
 def accuracy(preds_path, acc_path):
     pred = pd.read_parquet(preds_path)
     acc = accuracy_score(pred["y_true"], pred["y_pred"])
-    np.array(acc).tofile(acc_path)
+    np.save(acc_path, acc, allow_pickle=False)
 
 
 def roc_auc(preds_path, auc_path):
     pred = pd.read_parquet(preds_path)
     auc = roc_auc_score(pred["y_true"], pred["score"])
-    np.array(auc).tofile(auc_path)
+    np.save(auc_path, auc, allow_pickle=False)
 
 
 def hits_at_k(preds_path, k, hits_path):
@@ -33,20 +33,20 @@ def hits_at_k(preds_path, k, hits_path):
         logits_pos = preds.query("y_true == 1")["logits"]
         n_pos = len(logits_pos)
         hits_k = (logits_pos >= kth_neg_score).sum() / n_pos
-    np.array(hits_k).tofile(hits_path)
+    np.save(hits_path, hits_k, allow_pickle=False)
 
 
 def precision_at_k(preds_path, k, pr_path):
     preds = pd.read_parquet(preds_path)
     top_k = preds.nlargest(k, "logits")
     pr_k = top_k["y_true"].mean()
-    pr_k.astype(np.float64).tofile(pr_path)
+    np.save(pr_path, pr_k, allow_pickle=False)
 
 
 def f1(preds_path, f1_path):
     pred = pd.read_parquet(preds_path)
     f1 = f1_score(pred["y_true"], pred["y_pred"], zero_division=0)
-    np.array(f1).tofile(f1_path)
+    np.save(f1_path, f1, allow_pickle=False)
 
 
 def mrr(preds_path, mrr_path):
@@ -59,15 +59,16 @@ def mrr(preds_path, mrr_path):
     ranking_list = 0.5 * (optimistic_rank + pessimistic_rank) + 1
     mrr_list = 1.0 / ranking_list.astype(np.float32)
     mrr = np.mean(mrr_list)
-    mrr.astype(np.float64).tofile(mrr_path)
+    np.save(mrr_path, mrr, allow_pickle=False)
 
 
+@torch.inference_mode
 def bce(preds_path, bce_path):
     preds = pd.read_parquet(preds_path)
     logits = torch.tensor(preds["logits"].values)
     y_true = torch.tensor(preds["y_true"].values)
     bce = F.binary_cross_entropy_with_logits(logits, y_true.to(torch.float32))
-    bce.cpu().numpy().astype(np.float64).tofile(bce_path)
+    np.save(bce_path, bce.numpy(), allow_pickle=False)
 
 
 def average_precision(preds_path, ap_path):
@@ -104,7 +105,7 @@ def average_precision(preds_path, ap_path):
 def mean_average_precision(ap_path, node, map_path):
     ap_scores = pd.read_parquet(ap_path).query(f"node_type=='{node}'")
     map_score = ap_scores["average_precision"].mean()
-    np.array(map_score).tofile(map_path)
+    np.save(map_path, map_score, allow_pickle=False)
 
 
 def success_at_k_ratio(preds_path, node, th, num_path, pct_path):
@@ -118,8 +119,8 @@ def success_at_k_ratio(preds_path, node, th, num_path, pct_path):
     )
     num = dframe.query(f"rank_pct <= {th} and y_true==1")[node].nunique()
     pct = num / dframe[node].nunique()
-    np.array(num).tofile(num_path)
-    np.array(pct).tofile(pct_path)
+    np.save(num_path, num, allow_pickle=False)
+    np.save(pct_path, pct, allow_pickle=False)
 
 
 def collate(*args, infer_mode):
@@ -128,5 +129,5 @@ def collate(*args, infer_mode):
         record = json.load(f)
     record["infer_mode"] = infer_mode
     for path in map(Path, score_paths):
-        record[path.stem] = np.fromfile(path).item()
+        record[path.stem] = np.load(path).item()
     pd.DataFrame([record]).to_parquet(metrics_path)
