@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 from copairs import compute
+from copairs.map import mean_average_precision as copairs_map
 from copairs.map.average_precision import build_rank_lists
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from torch.nn import functional as F
@@ -103,10 +104,20 @@ def average_precision(preds_path, ap_path):
     ap_scores.to_parquet(ap_path)
 
 
-def mean_average_precision(ap_path, node, map_path):
-    ap_scores = pd.read_parquet(ap_path).query(f"node_type=='{node}'")
-    map_score = ap_scores["average_precision"].mean()
-    np.save(map_path, map_score, allow_pickle=False)
+def mean_average_precision(ap_path, map_df_path, null_size, threshold, seed):
+    ap_scores = pd.read_parquet(ap_path)
+    map_df = copairs_map(
+        ap_scores, ["node_type", "node_id"], null_size, threshold, seed
+    )
+    map_df.to_parquet(map_df_path)
+
+
+def phenotypic_activity(map_df_path, node, pa_path, map_score_path):
+    map_df = pd.read_parquet(map_df_path).query(f"node_type=='{node}'")
+    map_score = map_df["mean_average_precision"].mean()
+    pa_score = map_df["below_p"].mean()
+    np.save(pa_path, pa_score, allow_pickle=False)
+    np.save(map_score_path, map_score, allow_pickle=False)
 
 
 def success_at_k(preds_path, node, k, num_path, pct_path):

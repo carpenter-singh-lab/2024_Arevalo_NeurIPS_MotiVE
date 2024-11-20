@@ -45,6 +45,8 @@ rule metrics:
                 "bce",
                 "map_source",
                 "map_target",
+                "phenotypic_activity_source",
+                "phenotypic_activity_target",
                 "success_at_15_source_num",
                 "success_at_15_source_pct",
                 "success_at_15_target_num",
@@ -190,9 +192,23 @@ rule mean_average_precision:
     input:
         "{output_path}/{subset}/metrics/average_precision.parquet",
     output:
+        "{output_path}/{subset}/metrics/mean_average_precision.parquet",
+    params:
+        null_size=10000,
+        threshold=0.1,
+        seed=0,
+    run:
+        evaluate.mean_average_precision(*input, *output, **params)
+
+
+rule phenotypic_activity:
+    input:
+        "{output_path}/{subset}/metrics/mean_average_precision.parquet",
+    output:
+        "{output_path}/{subset}/metrics/phenotypic_activity_{node}.npy",
         "{output_path}/{subset}/metrics/map_{node}.npy",
     run:
-        evaluate.mean_average_precision(*input, wildcards.node, *output)
+        evaluate.phenotypic_activity(*input, wildcards.node, *output)
 
 
 rule success_at_k:
