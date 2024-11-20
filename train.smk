@@ -49,6 +49,8 @@ rule metrics:
                 "success_at_15_source_pct",
                 "success_at_15_target_num",
                 "success_at_15_target_pct",
+                "random_success_at_15_target_num",
+                "random_success_at_15_target_pct",
             ],
         ),
         "{output_path}/config.json",
@@ -201,3 +203,13 @@ rule success_at_k:
         "{output_path}/{subset}/metrics/success_at_{k}_{node}_pct.npy",
     run:
         evaluate.success_at_k(*input, wildcards.node, int(wildcards.k), *output)
+
+
+rule random_success_at_k:
+    input:
+        "{output_path}/{subset}/results.parquet",
+    output:
+        "{output_path}/{subset}/metrics/random_success_at_{k}_{node}_num.npy",
+        "{output_path}/{subset}/metrics/random_success_at_{k}_{node}_pct.npy",
+    run:
+        evaluate.random_success_at_k(*input, wildcards.node, int(wildcards.k), *output)

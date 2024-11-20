@@ -124,6 +124,25 @@ def success_at_k(preds_path, node, k, num_path, pct_path):
     np.save(pct_path, pct, allow_pickle=False)
 
 
+def random_success_at_k(preds_path, node, k, num_path, pct_path):
+    """Random baseline for Robhan metric"""
+    dframe = pd.read_parquet(preds_path)
+    endpoint = "source" if node == "target" else "target"
+    numpop = dframe[endpoint].nunique()
+    counts = dframe.groupby(node)["y_true"].sum()
+    # The probability of not getting a number less than K in a single trial is:
+    # P(failure) = 1 - P(success) = 1 - k/numpop
+    # Probability of n Failures:
+    # P(n failures) = (1 - k/numpop)^n
+    # the probability of at least one success is:
+    # P(at least one success) = 1 - P(n failures) = 1 - (1 - k/numpop)^n
+    baseline = 1 - (1 - k / numpop) ** counts
+    pct = baseline.mean()
+    num = int(pct * dframe[node].nunique())
+    np.save(num_path, num, allow_pickle=False)
+    np.save(pct_path, pct, allow_pickle=False)
+
+
 def collate(*args, infer_mode):
     *score_paths, config_path, metrics_path = args
     with open(config_path) as f:
