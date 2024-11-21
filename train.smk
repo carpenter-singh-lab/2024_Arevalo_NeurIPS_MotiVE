@@ -43,17 +43,19 @@ rule metrics:
                 "f1",
                 "mrr",
                 "bce",
-                "map_source",
-                "map_target",
-                "phenotypic_activity_source",
-                "phenotypic_activity_target",
-                "success_at_15_source_num",
-                "success_at_15_source_pct",
-                "success_at_15_target_num",
-                "success_at_15_target_pct",
-                "random_success_at_15_target_num",
-                "random_success_at_15_target_pct",
             ],
+        ),
+        expand(
+            "{{output_path}}/{{infer_mode}}/{{subset}}/metrics/{metric}_{node}.npy",
+            metric=[
+                "map",
+                "phenotypic_activity",
+                "success_at_15_num",
+                "success_at_15_pct",
+                "random_success_at_15_num",
+                "random_success_at_15_pct",
+            ],
+            node=["source", "target"],
         ),
         "{output_path}/config.json",
     output:
@@ -215,8 +217,8 @@ rule success_at_k:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/success_at_{k}_{node}_num.npy",
-        "{output_path}/{subset}/metrics/success_at_{k}_{node}_pct.npy",
+        "{output_path}/{subset}/metrics/success_at_{k}_num_{node}.npy",
+        "{output_path}/{subset}/metrics/success_at_{k}_pct_{node}.npy",
     run:
         evaluate.success_at_k(*input, wildcards.node, int(wildcards.k), *output)
 
@@ -225,7 +227,7 @@ rule random_success_at_k:
     input:
         "{output_path}/{subset}/results.parquet",
     output:
-        "{output_path}/{subset}/metrics/random_success_at_{k}_{node}_num.npy",
-        "{output_path}/{subset}/metrics/random_success_at_{k}_{node}_pct.npy",
+        "{output_path}/{subset}/metrics/random_success_at_{k}_num_{node}.npy",
+        "{output_path}/{subset}/metrics/random_success_at_{k}_pct_{node}.npy",
     run:
         evaluate.random_success_at_k(*input, wildcards.node, int(wildcards.k), *output)
