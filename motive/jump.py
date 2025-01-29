@@ -1,6 +1,24 @@
 import numpy as np
 import pandas as pd
 
+mapper = {
+    "DOWNREGULATES_CHdG": "downregulates",
+    "CdG": "downregulates",
+    "UPREGULATES_CHuG": "upregulates",
+    "CuG": "upregulates",
+    "DRUG_TARGET": "targets",
+    "target": "targets",
+    "DRUG_CARRIER": "carries",
+    "carrier": "carries",
+    "DRUG_ENZYME": "enzyme",
+    "enzyme": "enzyme",
+    "DRUG_TRANSPORTER": "transports",
+    "transporter": "transports",
+    "BINDS_CHbG": "binds",
+    "CbG": "binds",
+    "DRUG_BINDING_GENE": "binds",
+}
+
 
 def select_features(dframe: pd.DataFrame, column_id: str) -> pd.DataFrame:
     """
@@ -134,6 +152,9 @@ def load_reduced_jump_annotations(
     annotation_path: str, all_s_t_labels_path: str, max_degree=150
 ):
     annotations = pd.read_parquet(annotation_path)
+    annotations["rel_type"] = annotations["rel_type"].map(lambda x: mapper.get(x, x))
+    # redlist = ["downregulates", "upregulates", "unknown"]
+    # annotations = annotations.query("rel_type not in @redlist").copy()
     annotations.dropna(subset=["inchikey", "target"], how="any", inplace=True)
     annotations["inchikey"] = annotations["inchikey"].str[:14]
     annotations.drop_duplicates(subset=["inchikey", "target"], inplace=True)

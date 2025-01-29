@@ -84,7 +84,7 @@ genes["component_id"] = genes["symbol"].map(component_ids)
 slim = pd.read_parquet("gene2go_homo_sapiens.parquet")
 slim["component_id"] = slim["GeneID"].map(component_ids)
 df = slim[["GO_ID", "component_id"]].merge(genes, on="component_id").drop_duplicates()
-redlist = df.groupby("GO_ID")["component_id"].nunique()[lambda x: x>15].index
+redlist = df.groupby("GO_ID")["component_id"].nunique()[lambda x: x > 15].index
 df = df.query("GO_ID not in @redlist").copy()
 
 mloc = info.set_index("GeneID")["map_location"][lambda x: x != "-"].reset_index()
