@@ -6,7 +6,7 @@ SELECT *
 FROM read_parquet('./**/*metrics.parquet', filename=TRUE);
 
 
-SELECT split_part(filename, '/', 3) AS DATA, -- model,
+SELECT split_part(filename, '/', 3) AS DATA,
  (success_at_15_num_target / success_at_15_pct_target)::INT AS total_gene,
  (success_at_15_num_source / success_at_15_pct_source)::INT AS total_cmpd,
  round(map_target, 3) AS map_gene,
@@ -16,5 +16,4 @@ SELECT split_part(filename, '/', 3) AS DATA, -- model,
  round(random_success_at_15_pct_target, 3) AS rnd_baseline,
 FROM results
 WHERE infer_mode = 'cartesian'
-  AND model = 'cosine'
 ORDER BY map_gene DESC;
