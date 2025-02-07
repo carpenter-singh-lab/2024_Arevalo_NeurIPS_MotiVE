@@ -20,6 +20,8 @@ dependencies = [
     "torch-cluster>=1.6.3",
     "torch-spline-conv>=1.2.2",
     "pycomplexheatmap>=1.8.1",
+    "fastcluster>=1.2.6",
+    "umap-learn>=0.5.7",
 ]
 
 [dependency-groups]
@@ -30,6 +32,7 @@ dev = [
     "rope>=1.13.0",
     "yapf>=0.40.2",
     "sqlparse>=0.5.3",
+    "snakefmt>=0.10.2",
 ]
 
 [tool.uv]

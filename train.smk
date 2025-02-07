@@ -29,6 +29,10 @@ rule all:
             "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/waterfall.pdf",
             **config,
         ),
+        expand(
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/heatmap.png",
+            **config,
+        ),
 
 
 rule metrics:
