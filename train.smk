@@ -33,6 +33,14 @@ rule all:
             "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/heatmap.png",
             **config,
         ),
+        expand(
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/umap.parquet",
+            **config,
+        ),
+        expand(
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/scatter.png",
+            **config,
+        ),
 
 
 rule metrics:

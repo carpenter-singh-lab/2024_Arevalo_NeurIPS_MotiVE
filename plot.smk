@@ -19,3 +19,20 @@ rule heatmap:
         "{output_path}/{infer_mode}/{subset}/analysis/heatmap.png",
     run:
         plot.heatmap(*input, *output)
+
+rule umap:
+    input:
+        "{output_path}/config.json",
+        "{output_path}/weights.pt",
+    output:
+        "{output_path}/umap.parquet",
+    run:
+        plot.umap(*input, *output)
+
+rule scatter:
+    input:
+        "{output_path}/umap.parquet",
+    output:
+        "{output_path}/scatter.png",
+    run:
+        plot.scatter(*input, *output)
