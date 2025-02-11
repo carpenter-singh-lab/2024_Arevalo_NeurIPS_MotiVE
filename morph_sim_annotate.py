@@ -5,7 +5,6 @@ from matplotlib import pyplot as plt
 from sklearn.neighbors import kneighbors_graph
 
 tgt = pd.read_parquet("data/bipartite/orf/target.parquet")
-tmap = pd.read_parquet("data/bipartite/orf/target_map.parquet")[0]
 X = tgt.divide(np.linalg.norm(tgt, axis=1), axis=0)
 A = kneighbors_graph(tgt, metric="cosine", n_neighbors=1).toarray()
 
@@ -21,13 +20,14 @@ tgt_dist = pd.DataFrame(
         "gene_dist": tgt_dist.values[row_indices, col_indices],
     }
 )
+tmap = pd.read_parquet("data/bipartite/orf/target_map.parquet")[0]
 tgt_dist["target_x"] = tgt_dist["symbol_a"].map(tmap)
 tgt_dist["target_y"] = tgt_dist["symbol_b"].map(tmap)
 tgt_dist = tgt_dist.query("symbol_a != symbol_b").copy().reset_index(drop=True)
 neigh = pd.DataFrame(dict(zip(["target_x", "target_y"], np.nonzero(A))))
 
-preds_path = "outputs/orf/target/bipartite/gnn/6756bb/cartesian/test/results.parquet"
 node = "target"
+preds_path = "outputs/orf/target/bipartite/gnn/6756bb/cartesian/test/results.parquet"
 dframe = pd.read_parquet(preds_path)
 k = 15
 dframe["rank"] = dframe.groupby(node)["score"].rank(
@@ -131,7 +131,7 @@ ax3.set_xticks(thresholds)
 ax3.set_xticklabels(cdf_tick_labels)
 ax3.set_xlabel("1 - CDF", labelpad=5)
 ax1.set_xlabel("Cosine Similarity")
-plt.title(f"Gene-Gene Similarities of ORF genes (num_genes)", pad=40)
+plt.title(f"Gene-Gene Similarities of ORF genes ({num_genes})", pad=40)
 ax1.grid(axis="y", alpha=0.75)
 plt.subplots_adjust(top=0.85)
 plt.legend()  # Legend removed

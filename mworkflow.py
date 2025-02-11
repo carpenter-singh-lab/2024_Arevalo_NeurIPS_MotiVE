@@ -1,10 +1,9 @@
 import json
 
-import pandas as pd
 import torch
 
 from model import create_model
-from motive import get_loaders
+from motive import get_cartesian_loader, get_loaders
 from train import run_test, train_loop
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,8 +27,6 @@ def train(config_path, model_path):
 
 
 def infer_sampled(config_path, model_path, subset, preds_path):
-    # TODO: Make infer_sampled and infer_cartesian compatible (maybe create a
-    # loader for cartesian and use a single function
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
     model.load_state_dict(best_params["model_state_dict"])
@@ -37,36 +34,12 @@ def infer_sampled(config_path, model_path, subset, preds_path):
     preds.to_parquet(preds_path)
 
 
-@torch.inference_mode
-def infer_cartesian(config_path, model_path, subset, preds_path, th=0):
+def infer_cartesian(config_path, model_path, subset, preds_path):
     config, model, loaders = init(config_path)
     best_params = torch.load(model_path, weights_only=True)
     model.load_state_dict(best_params["model_state_dict"])
 
     data = loaders[subset].loader.data
-    src = data["binds"].edge_label_index[0].unique()
-    tgt = data["binds"].edge_label_index[1].unique()
-    edges = torch.cartesian_prod(src, tgt).T.contiguous()
-    gt_edges = data["binds"].edge_label_index
-    y_true = torch.any(torch.all(edges.T[:, None] == gt_edges.T, axis=-1), axis=-1)
-    data["binds"].edge_label_index = edges
-    data["binds"].edge_label = y_true
-
-    model.eval()
-    logits = model(data.to(DEVICE))
-    scores = torch.sigmoid(logits).cpu().numpy()
-    edges = edges.cpu().numpy()
-    y_true = y_true.cpu().numpy()
-    logits = logits.cpu().numpy()
-
-    preds = pd.DataFrame(
-        {
-            "source": edges[0],
-            "target": edges[1],
-            "score": scores,
-            "logits": logits,
-            "y_pred": logits > th,
-            "y_true": y_true,
-        }
-    )
+    loader = get_cartesian_loader(data, mode="label")
+    preds = run_test(model, loader)
     preds.to_parquet(preds_path)

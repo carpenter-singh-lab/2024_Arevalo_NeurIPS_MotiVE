@@ -1,3 +1,5 @@
+from typing import Literal
+
 import numpy as np
 import pandas as pd
 import torch
@@ -239,6 +241,42 @@ def load_graph_helper(leave_out: str, tgt_type: str, graph_type: str):
         test_data = load_graph(*paths, *testing, graph_type)
 
     return train_data, valid_data, test_data
+
+
+def get_cartesian_loader(
+    data: HeteroData, mode: Literal["all", "label"] = "all"
+) -> LinkNeighborLoader:
+    """
+    Create a loader that predicts all source-target pairs.
+    if mode=="all" will use all source and target nodes in the dataset.
+    if mode=="label" will use source and target nodes in the edge_label_index only
+    """
+    if mode == "all":
+        src = data["source"].node_id.cpu()
+        tgt = data["target"].node_id.cpu()
+    elif mode == "label":
+        src = data["binds"].edge_label_index[0].unique()
+        tgt = data["binds"].edge_label_index[1].unique()
+    else:
+        raise ValueError('Invalid mode. use "all" or "label"')
+    edges = torch.cartesian_prod(src, tgt).T.contiguous()
+    gt_edges = data["binds"].edge_label_index
+    y_true = torch.any(torch.all(edges.T[:, None] == gt_edges.T, axis=-1), axis=-1)
+    data["binds"].edge_label_index = edges
+    data["binds"].edge_label = y_true
+    bsz = 8192
+    shuffle = False
+    data_loader = LinkNeighborLoader(
+        data=data,
+        num_neighbors={key: [-1] * 4 for key in data.edge_types},
+        edge_label_index=(("source", "binds", "target"), edges),
+        edge_label=y_true,
+        subgraph_type="bidirectional",
+        batch_size=bsz,
+        shuffle=shuffle,
+        filter_per_worker=True,
+    )
+    return PrefetchLoader(loader=data_loader)
 
 
 def get_loader(data: HeteroData, edges, leave_out, type: str) -> LinkNeighborLoader:
