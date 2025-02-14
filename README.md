@@ -53,3 +53,9 @@ The training will produce a `test_results.parquet` file in the `outputs/` folder
 | (40, 1452)   | 0.923437 | True     |        1 |     0.999943 |
 | (412, 110)   | 0.917436 | True     |        1 |     0.999924 |
 
+
+## Explore params
+
+```bash
+snakemake -s explore.smk --configfile gnn.json --config output_path=optimize num_search=10
+```

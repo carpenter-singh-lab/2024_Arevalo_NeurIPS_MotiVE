@@ -1,0 +1,13 @@
+{
+    "leave_out": "target",
+    "graph_type": "bipartite",
+    "target_type": "orf",
+    "neg_ratio": 10,
+    "model": "gnn",
+    "num_epochs": 10,
+    "eval_freq": 5,
+    "initialization": "cp",
+    "hidden_channels": 1024,
+    "learning_rate": 7.23340981522738e-05,
+    "weight_decay": 0.0040421026533938
+}
