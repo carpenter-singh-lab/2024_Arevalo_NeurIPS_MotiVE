@@ -120,15 +120,19 @@ def phenotypic_activity(map_df_path, node, pa_path, map_score_path):
     np.save(map_score_path, map_score, allow_pickle=False)
 
 
-def success_at_k(preds_path, node, k, num_path, pct_path):
-    """Robhan metric"""
-    dframe = pd.read_parquet(preds_path)
+def add_rank(dframe: pd.DataFrame, node: str):
     dframe["rank"] = dframe.groupby(node)["score"].rank(
         method="min", ascending=False, pct=False
     )
     dframe["rank_pct"] = dframe.groupby(node)["score"].rank(
         method="min", ascending=False, pct=True
     )
+
+
+def success_at_k(preds_path, node, k, num_path, pct_path):
+    """Robhan metric"""
+    dframe = pd.read_parquet(preds_path)
+    add_rank(dframe, node)
     num = dframe.query(f"rank <= {k} and y_true")[node].nunique()
     pct = num / dframe[node].nunique()
     np.save(num_path, num, allow_pickle=False)

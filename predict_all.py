@@ -9,8 +9,8 @@ from matplotlib import pyplot as plt
 
 from motive import get_all_st_edges, get_loaders, load_graph_helper
 from motive.sample_negatives import negative_sampling, select_nodes_to_sample
-from utils.evaluate import Evaluator
 from mworkflow import init
+from utils.evaluate import Evaluator
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 mapper = {
@@ -134,8 +134,11 @@ model_path = Path(config_path).parent / "weights.pt"
 tgt_type = config["target_type"]
 graph_type = config["graph_type"]
 leave_out = config["leave_out"]
+neg_ratio = config["neg_ratio"]
 train_data, valid_data, test_data = load_graph_helper(leave_out, tgt_type, graph_type)
-train_loader, val_loader, test_loader = get_loaders(leave_out, tgt_type, graph_type)
+train_loader, val_loader, test_loader = get_loaders(
+    leave_out, tgt_type, graph_type, neg_ratio
+)
 
 best_params = torch.load(model_path, weights_only=True)
 best_th = 0

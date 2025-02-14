@@ -279,27 +279,25 @@ def get_cartesian_loader(
     return PrefetchLoader(loader=data_loader)
 
 
-def get_loader(data: HeteroData, edges, leave_out, type: str) -> LinkNeighborLoader:
+def get_loader(
+    data: HeteroData,
+    edges,
+    leave_out,
+    neg_ratio: int,
+    batch_size: int,
+    shuffle: bool,
+) -> LinkNeighborLoader:
     edge_label_index = data["source", "binds", "target"].edge_label_index
     edge_label = data["source", "binds", "target"].edge_label
-
-    if type == "train":
-        bsz = 512
-        shuffle = True
-        ratio = 10
-    else:
-        bsz = 8192
-        shuffle = False
-        ratio = 10
 
     data_loader = LinkNeighborLoader(
         data=data,
         num_neighbors={key: [-1] * 4 for key in data.edge_types},
         edge_label_index=(("source", "binds", "target"), edge_label_index),
         edge_label=edge_label,
-        transform=SampleNegatives(edges, leave_out, ratio),
+        transform=SampleNegatives(edges, leave_out, neg_ratio),
         subgraph_type="bidirectional",
-        batch_size=bsz,
+        batch_size=batch_size,
         shuffle=shuffle,
         filter_per_worker=True,
     )
@@ -307,15 +305,15 @@ def get_loader(data: HeteroData, edges, leave_out, type: str) -> LinkNeighborLoa
 
 
 def get_loaders(
-    leave_out: str, tgt_type: str, graph_type: str
+    leave_out: str, tgt_type: str, graph_type: str, neg_ratio: int
 ) -> tuple[LinkNeighborLoader]:
     train_data, valid_data, test_data = load_graph_helper(
         leave_out, tgt_type, graph_type
     )
 
     edges = get_all_st_edges(test_data)
-    train_loader = get_loader(train_data, edges, leave_out, "train")
-    valid_loader = get_loader(valid_data, edges, leave_out, "valid")
-    test_loader = get_loader(test_data, edges, leave_out, "test")
+    train_loader = get_loader(train_data, edges, leave_out, neg_ratio, 512, True)
+    valid_loader = get_loader(valid_data, edges, leave_out, neg_ratio, 8192, False)
+    test_loader = get_loader(test_data, edges, leave_out, neg_ratio, 8192, False)
 
     return train_loader, valid_loader, test_loader

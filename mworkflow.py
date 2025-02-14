@@ -13,7 +13,10 @@ def init(config_path):
     with open(config_path) as f:
         config = json.load(f)
     train_loader, val_loader, test_loader = get_loaders(
-        config["leave_out"], config["target_type"], config["graph_type"]
+        config["leave_out"],
+        config["target_type"],
+        config["graph_type"],
+        config["neg_ratio"],
     )
     train_data = train_loader.loader.data
     model = create_model(config, train_data).to(DEVICE)
