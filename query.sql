@@ -7,6 +7,7 @@ FROM read_parquet('./**/*metrics.parquet', filename=TRUE);
 
 
 SELECT split_part(filename, '/', 3) AS DATA,
+       split_part(filename, '/', 6) AS HASH,
        (success_at_15_num_target / success_at_15_pct_target)::INT AS total_gene,
        (success_at_15_num_source / success_at_15_pct_source)::INT AS total_cmpd,
        round(map_target, 3) AS map_gene,
