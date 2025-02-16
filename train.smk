@@ -3,7 +3,8 @@ from utils.utils import hashname
 import mworkflow
 import evaluate
 
-config["hash"] = hashname(config)
+if "hash" not in config:
+    config["hash"] = hashname(config)
 
 
 include: "plot.smk"
