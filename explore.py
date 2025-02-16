@@ -24,11 +24,11 @@ def generate_params(num_opts: int, params_path: str):
         config_search, columns=["hidden_channels", "learning_rate", "weight_decay"]
     )
 
-    params.to_csv(params_path, index=False)
+    params.to_parquet(params_path, index=False)
 
 
 def generate_configs(params_path: str, config):
-    params = pd.read_csv(params_path)
+    params = pd.read_parquet(params_path)
     output_dir = Path(
         "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/".format(**config)
     )

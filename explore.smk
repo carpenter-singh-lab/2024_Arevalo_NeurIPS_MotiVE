@@ -34,7 +34,7 @@ checkpoint results:
 
 checkpoint generate_configs:
     input:
-        "{output_path}/param_search.csv".format(**config),
+        "{output_path}/param_search.parquet".format(**config),
     output:
         touch("{output_path}/config.done".format(**config)),
     run:
@@ -43,6 +43,6 @@ checkpoint generate_configs:
 
 rule generate_params:
     output:
-        "{output_path}/param_search.csv".format(**config),
+        "{output_path}/param_search.parquet".format(**config),
     run:
         explore.generate_params(config["num_search"], *output)
