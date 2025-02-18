@@ -27,12 +27,9 @@ rule all:
             infer_mode=["sampled", "cartesian"],
         ),
         expand(
-            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/waterfall.pdf",
+            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/{analysis}",
             **config,
-        ),
-        expand(
-            "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/cartesian/test/analysis/heatmap.png",
-            **config,
+            analysis=["waterfall.pdf", "heatmap.png", "bipartite_target_knn_baseline.pdf"],
         ),
         expand(
             "{output_path}/{target_type}/{leave_out}/{graph_type}/{model}/{hash}/umap.parquet",

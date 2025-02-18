@@ -20,6 +20,7 @@ rule heatmap:
     run:
         plot.heatmap(*input, *output)
 
+
 rule umap:
     input:
         "{output_path}/config.json",
@@ -29,6 +30,7 @@ rule umap:
     run:
         plot.umap(*input, *output)
 
+
 rule scatter:
     input:
         "{output_path}/umap.parquet",
@@ -36,3 +38,12 @@ rule scatter:
         "{output_path}/scatter.png",
     run:
         plot.scatter(*input, *output)
+
+
+rule bipartite_target_knn_baseline:
+    input:
+        "{output_path}/{infer_mode}/{subset}/results.parquet",
+    output:
+        "{output_path}/{infer_mode}/{subset}/analysis/bipartite_target_knn_baseline.pdf",
+    run:
+        plot.bipartite_target_knn_baseline(*input, *output)
