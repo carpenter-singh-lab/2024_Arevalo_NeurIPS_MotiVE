@@ -3,7 +3,7 @@ DROP VIEW IF EXISTS results;
 
 CREATE VIEW results AS
 SELECT *
-FROM read_parquet('./**/*metrics.parquet', filename=TRUE);
+FROM read_parquet('optimize/**/*metrics.parquet', filename=TRUE);
 
 
 SELECT split_part(filename, '/', 3) AS DATA,
